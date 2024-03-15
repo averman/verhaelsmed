@@ -27,9 +27,13 @@ class FormDatabase extends Dexie {
     if (!existingItem || item.lastUpdatedTime > existingItem.lastUpdatedTime) {
       // If the incoming item is newer, update or add it to the database
       await this.formState.put(item);
-    } else {
-      console.warn('Existing data is newer or the same. No update performed.');
     }
+  }
+
+  
+  async dumpData() {
+    const allData = await this.formState.toArray();
+    console.log(allData);
   }
 }
 

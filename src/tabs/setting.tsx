@@ -1,7 +1,4 @@
 import React, { FunctionComponent } from 'react';
-import Form from '@rjsf/mui';
-import { RJSFSchema } from '@rjsf/utils';
-import validator from '@rjsf/validator-ajv8';
 import withPersistedState from '../utils/withPersistedState';
 
 const myJsonSchema = {
@@ -17,14 +14,35 @@ const myJsonSchema = {
       type: "string",
       title: "Last name",
     },
+    testArray: {
+      type: "array",
+      title: "Test Array",
+      items: {
+        type: "object",
+        properties: {
+          test: {
+            type: "string",
+            title: "TestProps",
+          },
+          test2: {
+            type: "string",
+            title: "TestProps2",
+          },
+        },
+      },
+      additionalItems: {
+        type: "string"
+      },
+    }
     // Define additional fields as needed
   },
 };
 
-const MyForm: FunctionComponent<any> = withPersistedState('settings',myJsonSchema);
+const MyForm: FunctionComponent<any> = withPersistedState({formId:'settings',jsonSchema:myJsonSchema});
 
 const Settings: React.FC = () => {
-  return <MyForm/>;
+  return <MyForm>
+  </MyForm>;
 };
 
 export default Settings;
