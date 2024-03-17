@@ -4,6 +4,8 @@ import MUIRichTextEditor, { TCustomControl, TMUIRichTextEditorRef } from 'mui-rt
 import {Lock} from '@mui/icons-material'
 import { ContentBlock, EditorState } from 'draft-js';
 import IconButton from '@mui/material/IconButton';
+import { gatherBlocks } from '../utils/ConversionUtils';
+import ProseNarrative from '../core/ProseNarrative';
 
 
 const myTheme = createTheme({
@@ -68,7 +70,9 @@ const defaultControls = ["title", "bold", "italic", "underline", "strikethrough"
 
 const Story: React.FC = () => {
     const [lock, setLock] = useState(false);
-    const [textval, setTextval] = useState("");
+    const defText:ProseNarrative = new ProseNarrative("1", 0, 
+      "*italic* **bold** ~~strikethrough~~ [link](https://www.google.com)");
+    const [textval, setTextval] = useState(gatherBlocks([defText.serialize("draftjs")]));
     const ref = useRef<TMUIRichTextEditorRef>(null);
     const handleChange = (data: string) => {
         

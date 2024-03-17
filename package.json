@@ -54,7 +54,11 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@craco/craco": "^7.1.0",
     "@types/draft-js": "^0.11.18",
-    "@types/markdown-draft-js": "^2.2.7"
+    "@types/markdown-draft-js": "^2.2.7",
+    "babel-jest": "^29.7.0"
   }
 }
