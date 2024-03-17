@@ -13,7 +13,7 @@ class FormDatabase extends Dexie {
   constructor() {
     super("FormDatabase");
     this.version(2).stores({
-      formState: 'id, &lastUpdatedTime', // Include lastUpdatedTime in the schema
+      formState: 'id', // Include lastUpdatedTime in the schema
     });
     this.formState = this.table("formState");
   }
@@ -29,6 +29,11 @@ class FormDatabase extends Dexie {
       await this.formState.put(item);
     }
   }
+
+  async getAllProjectIds() {
+    const allIds = await this.formState.toCollection().primaryKeys();
+    return allIds;
+  } 
 
   
   async dumpData() {

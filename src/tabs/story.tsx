@@ -63,7 +63,8 @@ const EditorContainer = styled('div')(({ theme }) => ({
     icon: <Lock />, // Use your actual icon component
   };
 
-const defaultControls = ["title", "bold", "italic", "underline", "strikethrough", "link", "media", "numberList", "bulletList", "quote", "code", "clear"];
+const defaultControls = ["title", "bold", "italic", "underline", "strikethrough", "link", "media", 
+  "quote", "code", "clear","save"];
 
 const Story: React.FC = () => {
     const [lock, setLock] = useState(false);

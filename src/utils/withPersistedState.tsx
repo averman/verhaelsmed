@@ -3,6 +3,8 @@ import { IChangeEvent, FormProps } from '@rjsf/core';
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import { db, FormState } from './IndexedDbUtils'; // Adjust the import path as necessary
+import { getFromKey } from './CommonUtils';
+import Button from '@mui/material/Button';
 
 interface WithPersistedStateProps extends FormProps<any> {}
 
@@ -12,6 +14,7 @@ export type PersistedStateOptions = {
   jsonSchemaUi?: any;
   initialData?: any;
   persistanceMapping?: any;
+  saveAsKey?: string;
 };
 
 const withPersistedState = (options: PersistedStateOptions): FunctionComponent<WithPersistedStateProps> => {
@@ -32,6 +35,10 @@ const withPersistedState = (options: PersistedStateOptions): FunctionComponent<W
         // Persist form state to IndexedDB using Dexie on change
         const saveState = async () => {
             if(!formData.lastUpdatedTime) formData.lastUpdatedTime = -1;
+            if(options.saveAsKey) {
+                let key = getFromKey(formData, options.saveAsKey, '');
+                if(key !== '') db.safePut({ id: key, data: formData, lastUpdatedTime: formData.lastUpdatedTime });
+            }
             await db.safePut({ id: options.formId, data: formData, lastUpdatedTime: formData.lastUpdatedTime });
         };
 
@@ -43,7 +50,9 @@ const withPersistedState = (options: PersistedStateOptions): FunctionComponent<W
         setFormData(e.formData);
     };
 
-    const CustomSubmitButton = () => <button type="submit">Save</button>;
+    function handleReset(): void {
+        setFormData(options.initialData || {});
+    }
 
     return (
         <Form
@@ -53,7 +62,15 @@ const withPersistedState = (options: PersistedStateOptions): FunctionComponent<W
             formData={formData}
             validator={validator}
             onSubmit={handleChange}
-        />
+        >
+            <Button type="submit" variant="contained" color="primary">
+                Save  
+            </Button>
+            <Button type="reset" variant="contained" color="secondary" onClick={handleReset}>
+                Reset
+            </Button>
+        </Form>
+
     );
 
   };

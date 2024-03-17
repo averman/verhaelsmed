@@ -1,48 +1,55 @@
 import React, { FunctionComponent } from 'react';
+import { UiSchema } from '@rjsf/utils';
+import { randomString } from '../utils/Random';
 import withPersistedState from '../utils/withPersistedState';
 
-const myJsonSchema = {
+const jsonSchema = {
   title: "A registration form",
   type: "object",
-  required: ["firstName", "lastName"],
+  required: ["projectName"],
   properties: {
-    firstName: {
+    projectId: {
       type: "string",
-      title: "First name",
+      title: "Project ID",
+      default: randomString(8),
     },
-    lastName: {
+    projectName: {
       type: "string",
-      title: "Last name",
+      title: "Project Name",
     },
-    testArray: {
-      type: "array",
-      title: "Test Array",
-      items: {
-        type: "object",
-        properties: {
-          test: {
-            type: "string",
-            title: "TestProps",
-          },
-          test2: {
-            type: "string",
-            title: "TestProps2",
-          },
-        },
-      },
-      additionalItems: {
-        type: "string"
-      },
-    }
-    // Define additional fields as needed
+    projectDescription: {
+      type: "string",
+      title: "Project Description",
+    },
   },
 };
 
-const MyForm: FunctionComponent<any> = withPersistedState({formId:'settings',jsonSchema:myJsonSchema});
+const uiSchema: UiSchema = {
+  projectId: {
+    "ui:readonly": true
+  },
+  projectName: {
+    "ui:autofocus": true,
+    "ui:emptyValue": "",
+  },
+  projectDescription: {
+    "ui:widget": "textarea",
+  },
+}
 
 const Settings: React.FC = () => {
-  return <MyForm>
-  </MyForm>;
+
+  const SettingsForm: FunctionComponent<any> = withPersistedState({
+    formId:'settings',
+    jsonSchema: jsonSchema,
+    jsonSchemaUi:uiSchema,
+    saveAsKey:'projectId'
+  });
+
+  return <>
+    <SettingsForm>
+    </SettingsForm>
+  </>
 };
 
 export default Settings;
