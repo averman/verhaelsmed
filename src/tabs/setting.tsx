@@ -9,7 +9,7 @@ import { db, FormState } from '../utils/IndexedDbUtils'; // Adjust the import pa
 import LoadModal from '../component/LoadModal';
 
 const jsonSchema: any = {
-  title: "A registration form",
+  title: "Project Settings",
   type: "object",
   required: ["projectName"],
   properties: {
