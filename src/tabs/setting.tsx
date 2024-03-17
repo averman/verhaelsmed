@@ -50,16 +50,6 @@ const Settings: React.FC = () => {
   const [items, setItems] = useState<{name: string, id: string, description: string}[]>([]);
 
   useEffect(() => {
-    // Load the initial form state from IndexedDB using Dexie
-    const loadInitialState = async () => {
-      const initialState: FormState | undefined = await db.formState.get(formId);
-      if (initialState && initialState.data) setFormData(initialState.data);
-    };
-
-    loadInitialState();
-  }, []);
-
-  useEffect(() => {
     // Persist form state to IndexedDB using Dexie on change
     const saveState = async () => {
       if (!formData.lastUpdatedTime) formData.lastUpdatedTime = -1;
@@ -81,9 +71,24 @@ const Settings: React.FC = () => {
     saveState();
   }, [formData]);
 
+  useEffect(() => {
+    // Load the initial form state from IndexedDB using Dexie
+    const loadInitialState = async () => {
+      const initialState: FormState | undefined = await db.formState.get(formId);
+      if (initialState && initialState.data) {
+        setFormData(initialState.data);
+        console.log(initialState);
+      }
+    };
+
+    loadInitialState();
+  }, []);
+
   const handleChange = (e: IChangeEvent<any>) => {
     e.formData.lastUpdatedTime = Date.now();
-    setFormData(e.formData);
+    if(e.formData.projectName) {
+      setFormData(e.formData);
+    }
   };
 
   const handleReset = () => {
