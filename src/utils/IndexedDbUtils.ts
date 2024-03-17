@@ -32,7 +32,8 @@ class FormDatabase extends Dexie {
 
   async getAllProjectIds() {
     const allIds = await this.formState.toCollection().primaryKeys();
-    return allIds;
+    // Return all the primary keys except "settings"
+    return allIds.filter((id) => id !== "settings");
   } 
 
   
