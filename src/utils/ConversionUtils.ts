@@ -1,7 +1,17 @@
+const headerLevelMap:any = {
+    'header-1': 'header-one',
+    'header-2': 'header-two',
+    'header-3': 'header-three',
+    'header-4': 'header-four',
+    'header-5': 'header-five',
+    'header-6': 'header-six'
+}
+
 export function markdownToDraftjs(input: string): any {
     let result: any = {
         cleanText: "",
-        styleRanges: []
+        styleRanges: [],
+        blockType: "unstyled"
     };
 
     let cursor = 0;
@@ -38,7 +48,26 @@ export function markdownToDraftjs(input: string): any {
                 result.cleanText += input.substring(cursor, end);
                 cursor = end + 2; // Move past the closing "~~"
             }
-        } 
+        } else if (input[cursor] === ">") {
+            let end = input.indexOf("\n", cursor) === -1 ? input.length : input.indexOf("\n", cursor);
+            result.blockType = "blockquote";
+            result.cleanText += input.substring(cursor + 1, end).trim();
+            cursor = end;
+        }
+        else if (input.substring(cursor, cursor + 3) === "```") {
+            let end = input.indexOf("```", cursor + 3) + 3;
+            end = end === 2 ? input.length : end; // If no closing ```, go to the end of the input
+            result.blockType = "code-block";
+            result.cleanText += input.substring(cursor + 3, end - 3);
+            cursor = end;
+        }
+        else if (input[cursor] === "`") {
+            let end = input.indexOf("`", cursor + 1) + 1;
+            end = end === 0 ? input.length : end; // If no closing `, go to the end of the input
+            result.styleRanges.push({ offset: result.cleanText.length, length: end - cursor - 2, style: 'CODE' });
+            result.cleanText += input.substring(cursor + 1, end - 1);
+            cursor = end;
+        }
         // Link
         else if (input[cursor] === "[") {
             let endBracket = input.indexOf("]", cursor + 1);
@@ -67,11 +96,12 @@ export function markdownToDraftjs(input: string): any {
                 result.cleanText += input[cursor];
                 cursor++;
             }
-        }
-        // Handling other characters, including new lines as spaces
-        else if (input[cursor] === "\n") {
-            result.cleanText += " ";
-            cursor++;
+        } else if (input.startsWith("#")) {
+            let end = input.indexOf(" ", cursor);
+            let level = end - cursor;
+            result.blockType = headerLevelMap[`header-${level}`];
+            result.cleanText += input.substring(end + 1);
+            cursor = input.length; // Move cursor to the end as the whole line is consumed
         } else {
             result.cleanText += input[cursor];
             cursor++;
@@ -84,7 +114,7 @@ export function markdownToDraftjs(input: string): any {
 export function draftjsToMarkdown(draftjsData: any): string {
     let markdown = "";
 
-    let text = draftjsData.cleanText;
+    let text = draftjsData.text;
     const styles = draftjsData.styleRanges;
 
     // Sort styles by offset to handle them in order
@@ -122,10 +152,38 @@ export function draftjsToMarkdown(draftjsData: any): string {
         lastIndex = style.offset + style.length;
     });
 
-    // Add remaining text after the last style
-    markdown += text.substring(lastIndex);
-    // Add a newline for block separation
-    markdown += "\n";
+    if(draftjsData.type){
+        switch (draftjsData.type) {
+            case "header-one":
+                markdown = `# ${text}`;
+                break;
+            case "header-two":
+                markdown = `## ${text}`;
+                break;
+            case "header-three":
+                markdown = `### ${text}`;
+                break;
+            case "header-four":
+                markdown = `#### ${text}`;
+                break;
+            case "header-five":
+                markdown = `##### ${text}`;
+                break;
+            case "header-six":
+                markdown = `###### ${text}`;
+                break;
+            case "blockquote":
+                markdown = `> ${text}`;
+                break;
+            case "code-block":
+                markdown = "```\n" + text + "\n```";
+                break;
+            default:
+                break;
+        }
+    } else {
+        markdown += text.substring(lastIndex);
+    }
 
     return markdown.trim(); // Trim the trailing newline
 }
@@ -135,6 +193,8 @@ export function gatherBlocks(blocks: string[]): string {
     blocks.forEach((block, index) => {
         entityMap = Object.assign(entityMap, JSON.parse(block).data);
     });
-    return `{ "blocks": [${blocks.join(",")}], "entityMap": ${JSON.stringify(entityMap)} }`
+    let result = `{ "blocks": [${blocks.join(",")}], "entityMap": ${JSON.stringify(entityMap)} }`
+    console.log(result);
+    return result;
 }
 

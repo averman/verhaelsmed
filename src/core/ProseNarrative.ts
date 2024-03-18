@@ -4,7 +4,7 @@ import Narrative from "./Narrative";
 export default class ProseNarrative extends Narrative  {
     private text: string = "";
     getNormalizedText(): string { return this.text }
-    private blockType: string = "unstyled";
+    blockType: string = "unstyled";
     
     constructor(id: string, timestamp: number, text: string) {
         super();
