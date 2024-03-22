@@ -1,4 +1,6 @@
-export const jsonSchema = {
+import { RJSFSchema } from "@rjsf/utils";
+
+export const jsonSchema: RJSFSchema = {
     title: "Project Settings",
     type: "object",
     required: ["projectName"],

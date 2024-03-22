@@ -1,37 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IChangeEvent } from '@rjsf/core';
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import Button from '@mui/material/Button';
 import { UiSchema } from '@rjsf/utils';
-import { randomString } from '../utils/Random';
-import { db, FormState } from '../utils/IndexedDbUtils'; // Adjust the import path as necessary
+import { jsonSchema } from '../models/SettingsDataModel';
+import { useSettingsData } from '../contexts/SettingsDataContext';
 import LoadModal from '../component/LoadModal';
-
-const jsonSchema: any = {
-  title: "Project Settings",
-  type: "object",
-  required: ["projectName"],
-  properties: {
-    projectId: {
-      type: "string",
-      title: "Project ID",
-      default: randomString(8),
-    },
-    projectName: {
-      type: "string",
-      title: "Project Name",
-    },
-    projectDescription: {
-      type: "string",
-      title: "Project Description",
-    },
-  },
-};
 
 const uiSchema: UiSchema = {
   projectId: {
-    "ui:readonly": true
+    "ui:readonly": true,
   },
   projectName: {
     "ui:autofocus": true,
@@ -40,70 +19,41 @@ const uiSchema: UiSchema = {
   projectDescription: {
     "ui:widget": "textarea",
   },
-}
-
-const formId = 'settings';
+};
 
 const Settings: React.FC = () => {
   const [formData, setFormData] = useState<any>({});
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<{name: string, id: string, description: string}[]>([]);
+  const { saveSettingsData, settingsData, items, loadSettingsData } = useSettingsData();
 
-  useEffect(() => {
-    // Persist form state to IndexedDB using Dexie on change
-    const saveState = async () => {
-      if (!formData.lastUpdatedTime) formData.lastUpdatedTime = -1;
-      let key = formData.projectId || '';
-      if(key !== '' && formData.projectDescription) 
-        db.safePut({ id: key, data: formData, lastUpdatedTime: formData.lastUpdatedTime });
-      await db.safePut({ id: formId, data: formData, lastUpdatedTime: formData.lastUpdatedTime });
-
-      // Update the list of items
-      const allIds = await db.getAllProjectIds();
-      const items = await Promise.all(allIds.map(async (id) => {
-        const data = await db.formState.get(id);
-        return { name: data?.data.projectName || '', id: id, description: data?.data.projectDescription || '' };
-      }));
-      setItems(items);
-      
-    };
-
-    saveState();
-  }, [formData]);
-
-  useEffect(() => {
-    // Load the initial form state from IndexedDB using Dexie
-    const loadInitialState = async () => {
-      const initialState: FormState | undefined = await db.formState.get(formId);
-      if (initialState && initialState.data) {
-        setFormData(initialState.data);
-        console.log(initialState);
-      }
-    };
-
-    loadInitialState();
-  }, []);
+  // Use settingsData from context as the initial form data
+  React.useEffect(() => {
+    if (settingsData) {
+      setFormData(settingsData);
+    }
+  }, [settingsData]);
 
   const handleChange = (e: IChangeEvent<any>) => {
     e.formData.lastUpdatedTime = Date.now();
-    if(e.formData.projectName) {
+    if (e.formData.projectName) {
       setFormData(e.formData);
+      saveSettingsData(e.formData);
     }
   };
 
   const handleReset = () => {
     setFormData({});
-  }
+    // Optionally, reset to initial state or clear specific settings
+  };
 
   const handleLoadClick = () => {
     setOpen(true);
-  }
+  };
 
   const handleLoad = async (id: string) => {
-    const data = await db.formState.get(id);
-    console.log(data);
-    if (data) setFormData(data.data);
-  }
+    await loadSettingsData(); // Assuming this method or a similar one is adapted to load by ID
+    setOpen(false); // Close the modal after loading
+  };
 
   return (
     <>

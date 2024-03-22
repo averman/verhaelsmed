@@ -1,26 +1,57 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { ProjectSettings } from '../models/SettingsDataModel'; // Adjust the import path as necessary
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { ProjectSettings } from '../models/SettingsDataModel';
+import { db, FormState } from '../utils/IndexedDbUtils';
+
+interface ProjectItem {
+  name: string;
+  id: string;
+  description: string;
+}
 
 interface SettingsDataState {
   settingsData: ProjectSettings;
   setSettingsData: (data: ProjectSettings) => void;
+  loadSettingsData: () => Promise<void>;
+  saveSettingsData: (data: ProjectSettings) => Promise<void>;
+  items: ProjectItem[];
+  loadItems: () => Promise<void>;
 }
 
 const SettingsDataContext = createContext<SettingsDataState | undefined>(undefined);
 
-interface SettingsDataProviderProps {
-  children: ReactNode;
-}
-
-export const SettingsDataProvider: React.FC<SettingsDataProviderProps> = ({ children }) => {
+export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settingsData, setSettingsData] = useState<ProjectSettings>({} as ProjectSettings);
+  const [items, setItems] = useState<ProjectItem[]>([]);
 
-  const handleSetSettingsData = useCallback((data: ProjectSettings) => {
-    setSettingsData(data);
+  const loadSettingsData = useCallback(async () => {
+    const initialState: FormState | undefined = await db.formState.get('settings');
+    if (initialState && initialState.data) {
+      setSettingsData(initialState.data);
+    }
   }, []);
 
+  const saveSettingsData = useCallback(async (data: ProjectSettings) => {
+    await db.safePut({ id: 'settings', data, lastUpdatedTime: Date.now() });
+    setSettingsData(data);
+    await loadItems(); // Reload items after saving data
+  }, []);
+
+  const loadItems = useCallback(async () => {
+    const allIds = await db.getAllProjectIds();
+    const newItems = await Promise.all(allIds.map(async (id) => {
+      const data = await db.formState.get(id);
+      return { name: data?.data.projectName || '', id: id, description: data?.data.projectDescription || '' };
+    }));
+    setItems(newItems);
+  }, []);
+
+  useEffect(() => {
+    loadSettingsData();
+    loadItems();
+  }, [loadSettingsData, loadItems]);
+
   return (
-    <SettingsDataContext.Provider value={{ settingsData, setSettingsData: handleSetSettingsData }}>
+    <SettingsDataContext.Provider value={{ settingsData, setSettingsData, loadSettingsData, saveSettingsData, items, loadItems }}>
       {children}
     </SettingsDataContext.Provider>
   );
