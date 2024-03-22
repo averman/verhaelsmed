@@ -3,11 +3,35 @@ export default abstract class Narrative {
     public id: string = "";
 
     // Tags
-    private tags: {[key: string]: string} = {};
-    hasTag(tag: string, value?: string): boolean {return value ? this.tags[tag] === value : tag in this.tags;}
-    setTag(tag: string, value: string): void {this.tags[tag] = value;}
-    removeTag(tag: string): void {delete this.tags[tag];}
-    setTags(tags: {[key: string]: string}): void {this.tags = Object.assign(this.tags, tags);}
+    private tags: {[key: string]: string[]} = {};
+    hasTag(tag: string, value?: string): boolean {
+        if(!this.tags[tag]) return false;
+        if(typeof value == "undefined") return true;
+        return this.tags[tag].includes(value)
+    }
+    addTag(tag: string, value: string): void {
+        if(!this.tags[tag]) this.tags[tag] = [];
+        this.tags[tag].push(value)
+    }
+    removeTag(tag: string, value?: string): void {
+        if(typeof value == "undefined") {
+            delete this.tags[tag];
+            return;
+        }
+        this.tags[tag] = this.tags[tag].filter(x=>x!=value);
+    }
+    setTags(tags: {[key: string]: string[]}): void {
+        for (const key in tags) {
+            if (tags.hasOwnProperty(key)) {
+                const value = tags[key];
+                if (Array.isArray(value) && Array.isArray(this.tags[key])) {
+                    this.tags[key] = [...this.tags[key], ...value];
+                } else if (Array.isArray(value) && !Array.isArray(this.tags[key])) {
+                    this.tags[key] = Array.from(value);
+                }
+            }
+        }
+    }
 
     // Story
     public type: string = "unknown";
