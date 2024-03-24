@@ -154,7 +154,11 @@ export function draftjsToMarkdown(draftjsData: any): string {
         lastIndex = style.offset + style.length;
     });
     if(lastIndex == 0) markdown = text;
-    else if (lastIndex < text.length) markdown += text.substring(lastIndex);
+    else if (lastIndex < text.length) {
+        const tail = text.substring(lastIndex);
+        markdown += tail;
+        lastIndex += tail.length;
+    }
 
     if(draftjsData.type){
         switch (draftjsData.type) {
