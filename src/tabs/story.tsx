@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createTheme, styled, ThemeProvider } from '@mui/material/styles'
 import MUIRichTextEditor, { TMUIRichTextEditorRef } from 'mui-rte'
-import { gatherBlocks } from '../utils/ConversionUtils';
+import { gatherBlocks, spreadBlocks } from '../utils/ConversionUtils';
 import ProseNarrative from '../core/ProseNarrative';
 import { EditorState } from 'draft-js';
+import { useNarrativeData } from '../contexts/NarrativeDataContext';
 
 
 const myTheme = createTheme({
@@ -28,31 +29,37 @@ const defaultControls = ["title", "bold", "italic", "underline", "strikethrough"
 const Story: React.FC = () => {
     const [lock, setLock] = useState(false);
     const [editorState, setEditorState] = useState(EditorState.createEmpty());
+    const {narrativeData,setNarrativeData} = useNarrativeData();
+    const [textval, setTextval] = useState<string>("");
 
-    const defText:ProseNarrative = new ProseNarrative("1", 0, 
-      "*italic*\n**bold**\n~~strikethrough~~\n[link](https://www.google.com)");
-    const defText2:ProseNarrative = new ProseNarrative("2", 0, "header");
-    defText2.blockType = "header-one";
-    const defText3:ProseNarrative = new ProseNarrative("3", 0, "code");
-    defText3.blockType = "code-block";
-    const defText4:ProseNarrative = new ProseNarrative("4", 0, "quote");
-    defText4.blockType = "blockquote";
-    const [textval, setTextval] = useState(gatherBlocks([
-      defText.serialize("draftjs"),
-      defText2.serialize("draftjs"),
-      defText3.serialize("draftjs"),
-      defText4.serialize("draftjs")
-    ]));
+    useEffect(() => {
+        if(narrativeData["prose"]) {
+            setTextval(gatherBlocks(
+              Object.values(narrativeData["prose"])
+              .sort((a, b) => a.timeline - b.timeline)
+              .map(narrative => narrative.serialize('draftjs'))));
+        }
+    }, [narrativeData]);
+
     const ref = useRef<TMUIRichTextEditorRef>(null);
     const handleChange = (data: string) => {
         
             // Convert the editor's content to raw state
-            setTextval(data);
             const content = JSON.parse(data);
             let n = content.blocks.length;
+            const blockRaw = spreadBlocks(data);
+            const newNarratives= Object.assign({},narrativeData);
+            newNarratives["prose"] = {};
             for(let i=0; i<n; i++) {
-              // const narrative: ProseNarrative = new ProseNarrative()
+              const datum = blockRaw[i];
+              console.log("datum", datum)
+              const datumObj = JSON.parse(datum);
+              const narrative: ProseNarrative = new ProseNarrative(datumObj.key, i, datumObj.text, datumObj.type);
+              narrative.deserialize('draftjs', datum);
+              console.log("after deserialize",narrative);
+              newNarratives["prose"][datumObj.key] = narrative;
             }
+            setNarrativeData(newNarratives);
         // Use a library or a custom function to convert `content` to Markdown
     };
     return (

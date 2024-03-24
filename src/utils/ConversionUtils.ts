@@ -115,7 +115,9 @@ export function draftjsToMarkdown(draftjsData: any): string {
     let markdown = "";
 
     let text = draftjsData.text;
-    const styles = draftjsData.styleRanges;
+    console.log("draftjsdata",draftjsData)
+    const styles = draftjsData.inlineStyleRanges;
+    const entities = draftjsData.entityRanges;
 
     // Sort styles by offset to handle them in order
     styles.sort((a: any, b: any) => a.offset - b.offset);
@@ -143,7 +145,7 @@ export function draftjsToMarkdown(draftjsData: any): string {
                 markdown += `[${text.substring(style.offset, style.offset + style.length)}](${entity.data.url})`;
                 break;
             case 'IMAGE':
-                markdown += `![${text.substring(style.offset, style.offset + style.length)}](${style.data.url})`;
+                markdown += `![${text.substring(style.offset, style.offset + style.length)}](${entity.data.url})`;
                 break;
             default:
                 markdown += text.substring(style.offset, style.offset + style.length);
@@ -151,6 +153,8 @@ export function draftjsToMarkdown(draftjsData: any): string {
         }
         lastIndex = style.offset + style.length;
     });
+    if(lastIndex == 0) markdown = text;
+    else if (lastIndex < text.length) markdown += text.substring(lastIndex);
 
     if(draftjsData.type){
         switch (draftjsData.type) {
@@ -176,7 +180,7 @@ export function draftjsToMarkdown(draftjsData: any): string {
                 markdown = `> ${text}`;
                 break;
             case "code-block":
-                markdown = "```\n" + text + "\n```";
+                markdown = "```\n" + text.trim() + "\n```";
                 break;
             default:
                 break;
@@ -194,7 +198,20 @@ export function gatherBlocks(blocks: string[]): string {
         entityMap = Object.assign(entityMap, JSON.parse(block).data);
     });
     let result = `{ "blocks": [${blocks.join(",")}], "entityMap": ${JSON.stringify(entityMap)} }`
-    console.log(result);
     return result;
+}
+
+export function spreadBlocks(data: string): string[] {
+    let blocks = JSON.parse(data);
+    let resultObj: any = blocks.blocks;
+    let i=0;
+    for(let block of resultObj) {
+        for(let style of block.inlineStyleRanges) {
+            if(style.style === "LINK" || style.style === "IMAGE") {
+                style.entity = blocks.entityMap[i++];
+            }
+        }
+    }
+    return resultObj.map((block: any) => JSON.stringify(block));
 }
 

@@ -1,50 +1,74 @@
 import { draftjsToMarkdown, markdownToDraftjs } from "../utils/ConversionUtils";
 import Narrative from "./Narrative";
+import narrativeFactory from "./NarrativeFactory";
+
+const proseToDraftjsSerializer = {
+    serialize: (narrative: ProseNarrative) => {
+        let {cleanText, styleRanges} = markdownToDraftjs(narrative.text);
+        let entityRanges: any[] = [];
+        let entityData:any = {};
+        for(let style of styleRanges) {
+            if (style.style === "LINK") {
+                entityData[entityRanges.length] = style.entity;
+                entityRanges.push({
+                    offset: style.offset,
+                    length: style.length,
+                    key: entityRanges.length
+                });
+            }
+        }
+        let blockData = {
+            key: narrative.id,
+            text: cleanText,
+            type: narrative.blockType,
+            depth: 0,
+            inlineStyleRanges: styleRanges,
+            entityRanges: entityRanges,
+            data: entityData
+        }
+        return JSON.stringify(blockData);
+    },
+    deserialize: (data: string, narrative: ProseNarrative) => {
+        console.log(data);
+        let blockData = JSON.parse(data);
+        console.log(blockData);
+        narrative.text = draftjsToMarkdown(blockData);
+        narrative.id = blockData.key;
+        narrative.blockType = blockData.type;
+    }
+}
+
+const defaultSerializer = {
+    serialize: (narrative: ProseNarrative) => {
+        return JSON.stringify({text: narrative.text, blockType: narrative.blockType});
+    },
+    deserialize: (data: string, narrative: ProseNarrative) => {
+        let blockData = JSON.parse(data);
+        narrative.text = blockData.text;
+        narrative.blockType = blockData.blockType;
+    }
+
+}
 
 export default class ProseNarrative extends Narrative  {
-    private text: string = "";
+    narrativeType: string = "prose";
+    text: string = "";
     getNormalizedText(): string { return this.text }
     blockType: string = "unstyled";
     
-    constructor(id: string, timestamp: number, text: string) {
+    constructor(id: string, timeline: number, text: string, blockType?: string) {
         super();
         this.id = id;
-        this.timestamp = timestamp;
-        this.text = text;
-        this.type = "prose";
+        this.timeline = timeline;
 
-        this.addSerializer("draftjs", {
-            serialize: (narrative: ProseNarrative) => {
-                let {cleanText, styleRanges} = markdownToDraftjs(narrative.text);
-                let entityRanges: any[] = [];
-                let entityData:any = {};
-                for(let style of styleRanges) {
-                    if (style.style === "LINK") {
-                        entityData[entityRanges.length] = style.entity;
-                        entityRanges.push({
-                            offset: style.offset,
-                            length: style.length,
-                            key: entityRanges.length
-                        });
-                    }
-                }
-                let blockData = {
-                    key: narrative.id,
-                    text: cleanText,
-                    type: narrative.blockType,
-                    depth: 0,
-                    inlineStyleRanges: styleRanges,
-                    entityRanges: entityRanges,
-                    data: entityData
-                }
-                return JSON.stringify(blockData);
-            },
-            deserialize: (data: string, narrative: ProseNarrative) => {
-                let blockData = JSON.parse(data);
-                narrative.text = draftjsToMarkdown(blockData);
-                narrative.id = blockData.key;
-                narrative.blockType = blockData.type;
-            }
-        });
+        this.addSerializer("draftjs", proseToDraftjsSerializer);
+        this.addSerializer("default", defaultSerializer);
+        if(blockType) text = JSON.stringify({text, blockType});
+        this.deserialize("default", text);
     }
 }
+
+narrativeFactory.register(
+    "prose", 
+    (id: string, timeline: number, text: string) => new ProseNarrative(id, timeline, text)
+);

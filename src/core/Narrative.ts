@@ -1,5 +1,5 @@
 export default abstract class Narrative {
-    public timestamp: number = 0;
+    public timeline: number = 0;
     public id: string = "";
 
     // Tags
@@ -34,7 +34,7 @@ export default abstract class Narrative {
     }
 
     // Story
-    public type: string = "unknown";
+    abstract narrativeType: string;
     abstract getNormalizedText(): string;
 
     // Relations
