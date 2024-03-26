@@ -28,8 +28,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "prestart": "node scripts/generateTabs.js",
-    "prebuild": "node scripts/generateTabs.js",
+    "prestart": "node scripts/generateTabs.js && node scripts/archiveSource.js",
+    "prebuild": "node scripts/generateTabs.js && node scripts/archiveSource.js",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -59,6 +59,8 @@
     "@craco/craco": "^7.1.0",
     "@types/draft-js": "^0.11.18",
     "@types/markdown-draft-js": "^2.2.7",
+    "@types/marked": "^6.0.0",
+    "archiver": "^7.0.1",
     "babel-jest": "^29.7.0"
   }
 }

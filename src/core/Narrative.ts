@@ -36,6 +36,7 @@ export default abstract class Narrative {
     // Story
     abstract narrativeType: string;
     abstract getNormalizedText(): string;
+    // abstract clone(): Narrative;
 
     // Relations
     private relations: {[relationType: string]: {[relationKey: string]: string[]}} = {};

@@ -40,12 +40,10 @@ const proseToDraftjsSerializer = {
 
 const defaultSerializer = {
     serialize: (narrative: ProseNarrative) => {
-        return JSON.stringify({text: narrative.text, blockType: narrative.blockType});
+        return narrative.text;
     },
     deserialize: (data: string, narrative: ProseNarrative) => {
-        let blockData = JSON.parse(data);
-        narrative.text = blockData.text;
-        narrative.blockType = blockData.blockType;
+        narrative.text = data;
     }
 
 }
@@ -60,11 +58,12 @@ export default class ProseNarrative extends Narrative  {
         super();
         this.id = id;
         this.timeline = timeline;
+        this.text = text;
 
         this.addSerializer("draftjs", proseToDraftjsSerializer);
         this.addSerializer("default", defaultSerializer);
-        if(blockType) text = JSON.stringify({text, blockType});
-        this.deserialize("default", text);
+        // if(blockType) text = JSON.stringify({text, blockType});
+        // this.deserialize("default", text);
     }
 }
 
