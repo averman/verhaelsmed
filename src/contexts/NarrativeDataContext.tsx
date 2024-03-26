@@ -50,6 +50,7 @@ export const NarrativeDataProvider: React.FC<SettingsDataProviderProps> = ({ chi
     const loadData = async () => {
       let narratives: NarrativeRaw[] = [];
       try{
+        if(!settingsData.projectId) return;
         narratives = await db.narrative.where('projectId').equals(settingsData.projectId).toArray();
         const loadedNarratives = narratives.map(n => narrativeFactory.create(n.narrativeType, n.id, n.timeline, n.rawData));
         const narrativeDict: NarrativeDict = {};

@@ -1,5 +1,5 @@
 import { draftjsToMarkdown, markdownToDraftjs } from "../utils/ConversionUtils";
-import Narrative from "./Narrative";
+import Narrative, {defaultSerializer} from "./Narrative";
 import narrativeFactory from "./NarrativeFactory";
 
 const proseToDraftjsSerializer = {
@@ -38,16 +38,6 @@ const proseToDraftjsSerializer = {
     }
 }
 
-const defaultSerializer = {
-    serialize: (narrative: ProseNarrative) => {
-        return narrative.text;
-    },
-    deserialize: (data: string, narrative: ProseNarrative) => {
-        narrative.text = data;
-    }
-
-}
-
 export default class ProseNarrative extends Narrative  {
     narrativeType: string = "prose";
     text: string = "";
@@ -60,7 +50,7 @@ export default class ProseNarrative extends Narrative  {
         this.timeline = timeline;
         this.text = text;
 
-        this.addSerializer("draftjs", proseToDraftjsSerializer);
+        // this.addSerializer("draftjs", proseToDraftjsSerializer);
         this.addSerializer("default", defaultSerializer);
         // if(blockType) text = JSON.stringify({text, blockType});
         // this.deserialize("default", text);
@@ -69,5 +59,9 @@ export default class ProseNarrative extends Narrative  {
 
 narrativeFactory.register(
     "prose", 
-    (id: string, timeline: number, text: string) => new ProseNarrative(id, timeline, text)
+    (id: string, timeline: number, text: string) => {
+        let res = new ProseNarrative(id, timeline, '')
+        res.deserialize('default', text);
+        return res
+    }
 );

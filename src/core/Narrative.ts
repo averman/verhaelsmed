@@ -1,3 +1,5 @@
+
+
 export default abstract class Narrative {
     public timeline: number = 0;
     public id: string = "";
@@ -89,6 +91,22 @@ export interface NarrativeSerializer {
     serialize(narrative: Narrative): string;
     deserialize(data: string, target: Narrative): void;
 }
+
+class DefaultSerializer implements NarrativeSerializer {
+    // replacer function for JSON.stringify to exclude key serializer
+    replacer(key: string, value: any): any {
+        if(key == "serializers") return undefined;
+        return value;
+    }
+    serialize(narrative: Narrative): string {
+        return JSON.stringify(narrative,this.replacer)
+    }
+    deserialize(data: string, target: Narrative): void {
+        target = Object.assign(target, JSON.parse(data));
+    }
+}
+
+export const defaultSerializer = new DefaultSerializer();
 
 export interface NarrativeStore {
     getNarrative(id: string): Promise<Narrative>;
