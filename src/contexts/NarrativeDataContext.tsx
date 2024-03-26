@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import Narrative from '../core/Narrative';
+import Narrative, {NarrativeDict} from '../core/Narrative';
 import { db, NarrativeRaw } from '../utils/IndexedDbUtils'; // Ensure the correct path
 import { useSettingsData } from './SettingsDataContext';
 import narrativeFactory from '../core/NarrativeFactory';
-
-type NarrativeDict = { [narrativeType: string]: { [narrativeId: string]: Narrative } }
 
 interface NarrativeDataState {
   narrativeData: NarrativeDict;
@@ -26,6 +24,12 @@ export const NarrativeDataProvider: React.FC<SettingsDataProviderProps> = ({ chi
 
     setNarrativeData(data);
     const narrativeRaws: NarrativeRaw[] = [];
+
+    Object.values(data).forEach(async (narratives) => {
+      Object.values(narratives).forEach(async (narrative) => {
+
+      })
+    });
 
     // Save to IndexedDB
     Object.values(data).forEach(async (narratives) => {

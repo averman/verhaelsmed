@@ -87,6 +87,8 @@ export default abstract class Narrative {
     
 }
 
+export type NarrativeDict = { [narrativeType: string]: { [narrativeId: string]: Narrative } }
+
 export interface NarrativeSerializer {
     serialize(narrative: Narrative): string;
     deserialize(data: string, target: Narrative): void;

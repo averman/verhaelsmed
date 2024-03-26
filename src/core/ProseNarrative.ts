@@ -1,5 +1,6 @@
 import { draftjsToMarkdown, markdownToDraftjs } from "../utils/ConversionUtils";
-import Narrative, {defaultSerializer} from "./Narrative";
+import { randomString } from "../utils/Random";
+import Narrative, {NarrativeDict, defaultSerializer} from "./Narrative";
 import narrativeFactory from "./NarrativeFactory";
 
 const proseToDraftjsSerializer = {
@@ -65,3 +66,36 @@ narrativeFactory.register(
         return res
     }
 );
+
+narrativeFactory.registerOnChange(
+    "prose",
+    (narrative: Narrative, dict: NarrativeDict) => {
+        if(!(narrative instanceof ProseNarrative)) return;
+        if(narrative.getNormalizedText().indexOf("\n\n\n")==-1) return;
+        let parts = narrative.getNormalizedText().split(/[\n]{3,}/)
+        if(parts.length==0) return;
+        delete dict["prose"][narrative.id];
+        let a = Math.max(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x<narrative.timeline))
+        let b = Math.min(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x>narrative.timeline))
+        for(let i=0; i<parts.length; i++){
+            let newId: string = "";
+            let newTimeline: number = narrative.timeline;
+            do{
+                newId = "prose-" + randomString(6);
+            } while (dict["prose"][newId]);
+            if(b == Number.NEGATIVE_INFINITY) {
+                newTimeline = newTimeline + i;
+            } else if (a == Number.NEGATIVE_INFINITY) {
+                newTimeline = newTimeline - i;
+            } else {
+                newTimeline = a + (b - a)/parts.length
+            }
+            let newNarrative = new ProseNarrative(newId, newTimeline, '');
+            newNarrative = Object.assign(newNarrative, narrative);
+            newNarrative.timeline = newTimeline;
+            newNarrative.id = newId;
+            newNarrative.text = parts[i];
+            dict["prose"][newId] = newNarrative;
+        }
+    }
+)
