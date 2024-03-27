@@ -78,15 +78,16 @@ narrativeFactory.registerOnChange(
         let a = Math.max(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x<narrative.timeline))
         let b = Math.min(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x>narrative.timeline))
         for(let i=0; i<parts.length; i++){
-            let newId: string = "";
+            let newId: string = narrative.id;
             let newTimeline: number = narrative.timeline;
-            do{
-                newId = "prose-" + randomString(6);
-            } while (dict["prose"][newId]);
-            if(b == Number.NEGATIVE_INFINITY) {
+            if(i!=0)
+                do{
+                    newId = "prose-" + randomString(6);
+                } while (dict["prose"][newId]);
+            if(b == Number.POSITIVE_INFINITY) {
                 newTimeline = newTimeline + i;
             } else if (a == Number.NEGATIVE_INFINITY) {
-                newTimeline = newTimeline - i;
+                newTimeline = newTimeline - parts.length + i + 1;
             } else {
                 newTimeline = a + (b - a)/parts.length
             }

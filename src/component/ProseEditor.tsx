@@ -1,6 +1,6 @@
 // Filename: src/component/ProseEditor.tsx
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import { marked } from 'marked';
 import { useNarrativeData } from '../contexts/NarrativeDataContext';
 import ProseNarrative from '../core/ProseNarrative'
+import Narrative from '../core/Narrative';
 
 interface ProseEditorProps {
     narrativeId: string;
@@ -16,6 +17,9 @@ interface ProseEditorProps {
 
 const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
+    const [ narrative, setNarrative ] = useState<Narrative | undefined>(undefined);
+    const [isEditing, setIsEditing] = useState(false);
+    const editableContentRef = useRef<HTMLDivElement>(null);
 
     // Function to render markdown as HTML
     // Assuming renderMarkdown is a synchronous operation
@@ -27,10 +31,31 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
         return { __html: htmlString };
     };
 
+    useEffect(()=>{
+        if(narrativeData && narrativeData["prose"]){
+            setNarrative(narrativeData["prose"][narrativeId])
+        }
+    }, [narrativeData])
+
+    const handleDoubleClick = () => {
+        setIsEditing(true);
+    };
+
+    // Save changes or delete on empty content
+        const handleBlur = () => {
+            const newContent = editableContentRef.current?.innerText || '';
+            if (newContent.trim() === '') {
+                handleDelete()
+            } else {
+                handleEdit()
+            }
+            setIsEditing(false);
+        };
+
     // Edit functionality
     const handleEdit = () => {
         // Example prompt for new content. In a real application, consider using a modal or a more sophisticated editor.
-        const newContent = window.prompt('Edit content:', narrativeData['prose'][narrativeId].getNormalizedText());
+        let newContent = editableContentRef.current?.innerText || '';
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()) {
             const narratives = narrativeData['prose'];
             const narrative = narratives[narrativeId] as ProseNarrative;
@@ -41,22 +66,35 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
 
     // Delete functionality
     const handleDelete = () => {
-        const confirmDelete = window.confirm('Are you sure you want to delete this narrative?');
-        if (confirmDelete) {
-            const { [narrativeId]: deleted, ...remainingNarratives } = narrativeData['prose'];
-            setNarrativeData({ ...narrativeData, 'prose': remainingNarratives });
-        }
+        const { [narrativeId]: deleted, ...remainingNarratives } = narrativeData['prose'];
+        setNarrativeData({ ...narrativeData, 'prose': remainingNarratives });
     };
 
+    const handleSplit = () => {
+        let newContent = editableContentRef.current?.innerText || '';
+        if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()
+        && newContent.indexOf('\n\n\n')>-1) {
+            handleEdit();
+        }
+    }
+
     return (
-        <Card sx={{ borderRadius: '16px' }}>
+        <Card onDoubleClick={handleDoubleClick}>
             <CardContent>
-                <Typography component="div" dangerouslySetInnerHTML={renderMarkdown((narrativeData['prose'][narrativeId] as ProseNarrative)?.text || '')} />
+                {isEditing ? (
+                    <div
+                        ref={editableContentRef} // Use the ref here
+                        contentEditable
+                        onBlur={handleBlur}
+                        onInput={handleSplit}
+                        dangerouslySetInnerHTML={{ __html: narrative?.getNormalizedText() || '' }}
+                    ></div>
+                ) : (
+                    <Typography component="div">
+                        <div dangerouslySetInnerHTML={renderMarkdown(narrative?.getNormalizedText() || '')}></div>
+                    </Typography>
+                )}
             </CardContent>
-            <CardActions>
-                <Button size="small" onClick={handleEdit}>Edit</Button>
-                <Button size="small" onClick={handleDelete}>Delete</Button>
-            </CardActions>
         </Card>
     );
 };

@@ -27,7 +27,7 @@ export const NarrativeDataProvider: React.FC<SettingsDataProviderProps> = ({ chi
 
     Object.values(data).forEach(async (narratives) => {
       Object.values(narratives).forEach(async (narrative) => {
-
+        narrativeFactory.onChange(narrative, data);
       })
     });
 
