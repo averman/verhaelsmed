@@ -11,7 +11,7 @@ interface ProjectItem {
 interface SettingsDataState {
   settingsData: ProjectSettings;
   setSettingsData: (data: ProjectSettings) => void;
-  loadSettingsData: () => Promise<void>;
+  loadSettingsData: (id: string) => Promise<void>;
   saveSettingsData: (data: ProjectSettings) => Promise<void>;
   items: ProjectItem[];
   loadItems: () => Promise<void>;
@@ -23,8 +23,8 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [settingsData, setSettingsData] = useState<ProjectSettings>({} as ProjectSettings);
   const [items, setItems] = useState<ProjectItem[]>([]);
 
-  const loadSettingsData = useCallback(async () => {
-    const initialState: FormState | undefined = await db.formState.get('settings');
+  const loadSettingsData = useCallback(async (id: string) => {
+    const initialState: FormState | undefined = await db.formState.get(id);
     if (initialState && initialState.data) {
       setSettingsData(initialState.data);
     }
@@ -32,6 +32,7 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const saveSettingsData = useCallback(async (data: ProjectSettings) => {
     await db.safePut({ id: 'settings', data, lastUpdatedTime: Date.now() });
+    await db.safePut({ id: data.projectId, data, lastUpdatedTime: Date.now() });
     setSettingsData(data);
     await loadItems(); // Reload items after saving data
   }, []);
@@ -46,7 +47,7 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   useEffect(() => {
-    loadSettingsData();
+    loadSettingsData("settings");
     loadItems();
   }, [loadSettingsData, loadItems]);
 

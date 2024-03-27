@@ -7,6 +7,7 @@ import { UiSchema } from '@rjsf/utils';
 import { jsonSchema } from '../models/SettingsDataModel';
 import { useSettingsData } from '../contexts/SettingsDataContext';
 import LoadModal from '../components/LoadModal';
+import { randomString } from '../utils/Random';
 
 const uiSchema: UiSchema = {
   projectId: {
@@ -42,7 +43,7 @@ const Settings: React.FC = () => {
   };
 
   const handleReset = () => {
-    setFormData({});
+    setFormData({projectId: randomString(8)});
     // Optionally, reset to initial state or clear specific settings
   };
 
@@ -51,7 +52,7 @@ const Settings: React.FC = () => {
   };
 
   const handleLoad = async (id: string) => {
-    await loadSettingsData(); // Assuming this method or a similar one is adapted to load by ID
+    await loadSettingsData(id); // Assuming this method or a similar one is adapted to load by ID
     setOpen(false); // Close the modal after loading
   };
 
@@ -61,7 +62,7 @@ const Settings: React.FC = () => {
         schema={jsonSchema}
         uiSchema={uiSchema}
         formData={formData}
-        onChange={handleChange}
+        onSubmit={handleChange}
         validator={validator}
       >
         <Button type="submit" variant="contained" color="primary" style={{ margin: 10 }}>
