@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import { UiSchema } from '@rjsf/utils';
 import { jsonSchema } from '../models/SettingsDataModel';
 import { useSettingsData } from '../contexts/SettingsDataContext';
-import LoadModal from '../component/LoadModal';
+import LoadModal from '../components/LoadModal';
 
 const uiSchema: UiSchema = {
   projectId: {
