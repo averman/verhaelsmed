@@ -49,7 +49,7 @@ narrativeFactory.registerOnChange(
             } else if (a == Number.NEGATIVE_INFINITY) {
                 newTimeline = newTimeline - parts.length + i + 1;
             } else {
-                newTimeline = a + (b - a)/parts.length
+                newTimeline = a + (i+1)*((b - a)/(parts.length+2))
             }
             let newNarrative = new ProseNarrative(newId, newTimeline, '');
             newNarrative = Object.assign(newNarrative, narrative);

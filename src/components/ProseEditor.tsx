@@ -3,8 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { marked } from 'marked';
 import { useNarrativeData } from '../contexts/NarrativeDataContext';
@@ -13,19 +11,17 @@ import Narrative from '../core/Narrative';
 
 interface ProseEditorProps {
     narrativeId: string;
+    switchEditing: (currentId: string, next: boolean) => void;
+    initialEditingState: boolean;
 }
 
-const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
+const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, initialEditingState }) => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const [ narrative, setNarrative ] = useState<Narrative | undefined>(undefined);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(initialEditingState);
     const editableContentRef = useRef<HTMLDivElement>(null);
 
-    // Function to render markdown as HTML
-    // Assuming renderMarkdown is a synchronous operation
     const renderMarkdown = (markdown: string): { __html: string } => {
-        // Ensure that marked(markdown) is treated as returning a string.
-        // This line directly uses marked to convert markdown to HTML string.
         const htmlString = marked(markdown, {async: false});
         if(htmlString instanceof Promise) throw "Do not enable async render"
         return { __html: htmlString };
@@ -37,24 +33,37 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
         }
     }, [narrativeData])
 
+    useEffect(() => {
+        if (isEditing && editableContentRef.current) {
+            editableContentRef.current.focus();
+            // Optionally, place the cursor at the end of the content
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(editableContentRef.current);
+            range.setStart(editableContentRef.current, 0)
+            range.setEnd(editableContentRef.current, 0)
+            range.collapse(false);
+            if(sel==null) return;
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    }, [isEditing]);
+
     const handleDoubleClick = () => {
         setIsEditing(true);
     };
 
-    // Save changes or delete on empty content
-        const handleBlur = () => {
-            const newContent = editableContentRef.current?.innerText || '';
-            if (newContent.trim() === '') {
-                handleDelete()
-            } else {
-                handleEdit()
-            }
-            setIsEditing(false);
-        };
+    const handleBlur = () => {
+        const newContent = editableContentRef.current?.innerText || '';
+        if (newContent.trim() === '') {
+            handleDelete()
+        } else {
+            handleEdit()
+        }
+        setIsEditing(false);
+    };
 
-    // Edit functionality
     const handleEdit = () => {
-        // Example prompt for new content. In a real application, consider using a modal or a more sophisticated editor.
         let newContent = editableContentRef.current?.innerText || '';
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()) {
             const narratives = narrativeData['prose'];
@@ -75,6 +84,8 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId }) => {
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()
         && newContent.indexOf('\n\n\n')>-1) {
             handleEdit();
+            switchEditing(narrative?.id || '',true);
+            setIsEditing(false);
         }
     }
 
