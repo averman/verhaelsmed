@@ -21,6 +21,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ mouseX, mouseY, visible, menu
 
     return (
         <Box
+            id="context-menu"
             sx={{
                 position: 'fixed',
                 top: `${mouseY}px`,

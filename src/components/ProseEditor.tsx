@@ -14,9 +14,12 @@ interface ProseEditorProps {
     switchEditing: (currentId: string, next: boolean) => void;
     initialEditingState: boolean;
     handleContextMenu: (event: React.MouseEvent, items: string[]) => void;
+    handleEditorSelect: (id: string) => void;
+    isSelected: boolean;
 }
 
-const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, initialEditingState, handleContextMenu }) => {
+const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, initialEditingState, 
+    handleContextMenu, handleEditorSelect, isSelected }) => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const [ narrative, setNarrative ] = useState<Narrative | undefined>(undefined);
     const [isEditing, setIsEditing] = useState(initialEditingState);
@@ -91,7 +94,12 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, i
     }
 
     return (
-        <Card onDoubleClick={handleDoubleClick}>
+        <Card onDoubleClick={handleDoubleClick} style={{ backgroundColor: isSelected ? '#f0f0f0' : '' }} onClick={(e) => {
+            if (e.ctrlKey || e.metaKey) { // Check for Ctrl or Cmd key
+                e.stopPropagation(); // Prevent event from reaching the document
+                handleEditorSelect(narrativeId);
+            }
+        }}>
             <CardContent>
                 {isEditing ? (
                     <div
