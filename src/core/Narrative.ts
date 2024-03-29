@@ -5,7 +5,7 @@ export default abstract class Narrative {
     public id: string = "";
 
     // Tags
-    private tags: {[key: string]: string[]} = {};
+    tags: {[key: string]: string[]} = {};
     hasTag(tag: string, value?: string): boolean {
         if(!this.tags[tag]) return false;
         if(typeof value == "undefined") return true;

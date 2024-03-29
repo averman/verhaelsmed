@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNarrativeData } from '../contexts/NarrativeDataContext';
-import ProseEditor from '../components/ProseEditor'; // Ensure correct import path
-import ProseNarrative from '../core/ProseNarrative'; // Ensure correct import path
+import ProseEditor from '../components/ProseEditor'; 
+import ProseNarrative from '../core/ProseNarrative'; 
 import ContextMenu, { ContextMenuItem } from '../components/ContextMenu'
-import { title } from 'process';
+import TaggingModal from '../components/TaggingModal'; 
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
@@ -35,6 +35,12 @@ const Story: React.FC = () => {
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number; visible: boolean }>({ mouseX: 0, mouseY: 0, visible: false });
     const [selectedText, setSelectedText] = useState("");
     const [contextMenuItems, setContextMenuItems] = useState<ContextMenuItem[]>([]);
+    const [tagModalOpen, setTagModalOpen] = useState(false);
+    const [currentTags, setCurrentTags] = useState<{ [key: string]: string[] }>({});
+    const [knownTags, setKnownTags] = useState<string[]>([]);
+    const [narrativeId, setNarrativeId] = useState("");
+
+
 
     const getContextMenuItems = (items: string[]): ContextMenuItem[] => {
         const defaultItems = [
@@ -43,8 +49,8 @@ const Story: React.FC = () => {
                 action: logSelection
             },
             {
-                title: 'hello',
-                action: ()=>console.log('hello', setContextMenu({...contextMenu, visible: false}))
+                title: 'tags',
+                action: ()=>setTagModalOpen(true)
             },
         ];
 
@@ -55,8 +61,11 @@ const Story: React.FC = () => {
         setContextMenu({ mouseX: 0, mouseY: 0, visible: false });
     };
 
-    const handleContextMenu = (event: React.MouseEvent, items: string[]) => {
+    const handleContextMenu = (event: React.MouseEvent, items: string[], narrativeId: string) => {
         event.preventDefault();
+        const narrativeTags = narrativeData['prose'][narrativeId]?.tags || {};
+        setCurrentTags(narrativeTags);
+        setNarrativeId(narrativeId);
         setContextMenu({
             mouseX: event.clientX - 2,
             mouseY: event.clientY - 4,
@@ -120,6 +129,17 @@ const Story: React.FC = () => {
     }, [contextMenu.visible]); // Depend on the visibility of the context menu
 
 
+    const applyTagChanges = (narrativeId: string, newTags: { [key: string]: string[] }) => {
+        if (narrativeId) {
+            const narratives = narrativeData['prose'];
+            const narrative = narratives[narrativeId] as ProseNarrative;
+            narrative.tags = newTags;
+            setNarrativeData({ ...narrativeData, 'prose': {...narratives, [narrativeId]: narrative} });
+        }
+    };
+    
+
+
 
     return (
         <div>
@@ -139,7 +159,14 @@ const Story: React.FC = () => {
                 visible={contextMenu.visible}
                 menuItems={contextMenuItems}
             />
-
+            <TaggingModal
+                open={tagModalOpen}
+                handleClose={() => setTagModalOpen(false)}
+                tagsProp={currentTags}
+                knownTags={knownTags}
+                applyChanges={applyTagChanges}
+                narrativeId={narrativeId}
+            />
         </div>
     );
 };

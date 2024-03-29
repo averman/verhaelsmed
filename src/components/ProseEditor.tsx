@@ -13,7 +13,7 @@ interface ProseEditorProps {
     narrativeId: string;
     switchEditing: (currentId: string, next: boolean) => void;
     initialEditingState: boolean;
-    handleContextMenu: (event: React.MouseEvent, items: string[]) => void;
+    handleContextMenu: (event: React.MouseEvent, items: string[], narrativeId: string) => void;
     handleEditorSelect: (id: string) => void;
     isSelected: boolean;
 }
@@ -107,13 +107,13 @@ const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, i
                         contentEditable
                         onBlur={handleBlur}
                         onInput={handleSplit}
-                        onContextMenu={e=>handleContextMenu(e,["test","hello"])}
+                        onContextMenu={e=>handleContextMenu(e,["test","tags"],narrativeId)}
                         dangerouslySetInnerHTML={{ __html: narrative?.getNormalizedText() || '' }}
                     ></div>
                 ) : (
                     <Typography component="div">
                         <div dangerouslySetInnerHTML={renderMarkdown(narrative?.getNormalizedText() || '')}
-                        onContextMenu={e=>handleContextMenu(e,["hello"])}></div>
+                        onContextMenu={e=>handleContextMenu(e,["tags"],narrativeId)}></div>
                     </Typography>
                 )}
             </CardContent>
