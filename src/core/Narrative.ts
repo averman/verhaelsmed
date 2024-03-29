@@ -16,6 +16,7 @@ export default abstract class Narrative {
         this.tags[tag].push(value)
     }
     removeTag(tag: string, value?: string): void {
+        console.log("removing tag", tag, value)
         if(typeof value == "undefined") {
             delete this.tags[tag];
             return;

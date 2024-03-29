@@ -12,8 +12,8 @@ interface TaggingModalProps {
   handleClose: () => void;
   tagsProp: { [key: string]: string[] };
   knownTags: string[];
-  applyChanges: (narrativeId: string, tags: { [key: string]: string[] }) => void;
-  narrativeId: string;
+  applyChanges: (narrativeId: string | string [], tags: { [key: string]: string[] }) => void;
+  narrativeId: string | string[];
 }
 
 const style = {
@@ -99,7 +99,12 @@ const TaggingModal: React.FC<TaggingModalProps> = ({
 
   return (
     <Modal open={open} onClose={handleClose}>
-      <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'auto', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
+      <Box sx={{ position: 'absolute', top: '50%', left: '50%', 
+      transform: 'translate(-50%, -50%)', width: 'auto', bgcolor: 'background.paper', 
+      border: '2px solid #000', boxShadow: 24, p: 4, 
+      maxHeight: '70vh', // Set maximum height to 70% of the viewport height
+      overflowY: 'auto' // Enable vertical scrolling
+      }}>
         <TextField fullWidth label="Search Key" value={keySearch} onChange={e => setKeySearch(e.target.value)} margin="normal" />
         <TextField fullWidth label="Search Value" value={valueSearch} onChange={e => setValueSearch(e.target.value)} margin="normal" />
         <Divider />
