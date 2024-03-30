@@ -31,11 +31,14 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   const saveSettingsData = useCallback(async (data: ProjectSettings) => {
-    await db.safePut({ id: 'settings', data, lastUpdatedTime: Date.now() });
     await db.safePut({ id: data.projectId, data, lastUpdatedTime: Date.now() });
     setSettingsData(data);
     await loadItems(); // Reload items after saving data
   }, []);
+
+  useEffect(() => {
+     db.safePut({ id: 'settings', data: settingsData, lastUpdatedTime: Date.now() });
+  }, [settingsData]);
 
   const loadItems = useCallback(async () => {
     const allIds = await db.getAllProjectIds();
