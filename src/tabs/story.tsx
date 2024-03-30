@@ -4,6 +4,7 @@ import ProseEditor from '../components/ProseEditor';
 import ProseNarrative from '../core/ProseNarrative'; 
 import ContextMenu, { ContextMenuItem } from '../components/ContextMenu'
 import TaggingModal from '../components/TaggingModal'; 
+import SidebarFilter from '../components/SidebarFilter';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
@@ -108,8 +109,6 @@ const Story: React.FC = () => {
         setContextMenu({ ...contextMenu, visible: false });
     };
 
-    const sortedProseNarratives = Object.values(narrativeData['prose'] || {}).sort((a, b) => a.timeline - b.timeline);
-
     const handleEditorSelect = (id: string) => {
         setSelectedEditors(prev => {
             if (prev.includes(id)) {
@@ -196,16 +195,15 @@ const Story: React.FC = () => {
 
     return (
         <div>
-            {sortedProseNarratives.map((narrative,i) => (
-                <ProseEditor key={narrative.id} 
-                    narrativeId={narrative.id} 
-                    switchEditing={switchEditing} 
-                    initialEditingState={i==editableBlockId?true:false}
-                    handleContextMenu = {handleContextMenu}
-                    handleEditorSelect={handleEditorSelect}
-                    isSelected={selectedEditors.includes(narrative.id)}
-                />
-            ))}
+            <SidebarFilter 
+                narratives={Object.values(narrativeData['prose'] || {})} 
+                switchEditing={switchEditing} 
+                editableBlockId={editableBlockId}
+                handleContextMenu={handleContextMenu} 
+                handleEditorSelect={handleEditorSelect} 
+                isSelected={(id)=>selectedEditors.includes(id)}
+                component={ProseEditor}
+            />
             <ContextMenu
                 mouseX={contextMenu.mouseX}
                 mouseY={contextMenu.mouseY}

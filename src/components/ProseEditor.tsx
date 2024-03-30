@@ -8,17 +8,9 @@ import { marked } from 'marked';
 import { useNarrativeData } from '../contexts/NarrativeDataContext';
 import ProseNarrative from '../core/ProseNarrative'
 import Narrative from '../core/Narrative';
+import { NarrativeItemsProps } from './SidebarFilter';
 
-interface ProseEditorProps {
-    narrativeId: string;
-    switchEditing: (currentId: string, next: boolean) => void;
-    initialEditingState: boolean;
-    handleContextMenu: (event: React.MouseEvent, items: string[], narrativeId: string) => void;
-    handleEditorSelect: (id: string) => void;
-    isSelected: boolean;
-}
-
-const ProseEditor: React.FC<ProseEditorProps> = ({ narrativeId, switchEditing, initialEditingState, 
+const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing, initialEditingState, 
     handleContextMenu, handleEditorSelect, isSelected }) => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const [ narrative, setNarrative ] = useState<Narrative | undefined>(undefined);
