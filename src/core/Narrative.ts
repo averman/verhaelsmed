@@ -39,38 +39,6 @@ export default abstract class Narrative {
     // Story
     abstract narrativeType: string;
     abstract getNormalizedText(): string;
-    // abstract clone(): Narrative;
-
-    // Relations
-    private relations: {[relationType: string]: {[relationKey: string]: string[]}} = {};
-    addRelation(relationType: string, relationKey: string, targetNarrative: string): void {
-        if (!(relationType in this.relations)) this.relations[relationType] = {};
-        if (!(relationKey in this.relations[relationType])) this.relations[relationType][relationKey] = [];
-        this.relations[relationType][relationKey].push(targetNarrative);
-    }
-    removeRelation(relationType: string, relationKey: string, targetNarrative: string): void {
-        if (relationType in this.relations && relationKey in this.relations[relationType]) {
-            this.relations[relationType][relationKey] = this.relations[relationType][relationKey].filter((id) => id !== targetNarrative);
-        }
-    }
-    async getRelatedNarratives( store: NarrativeStore, relationType: string, relationKey?: string): Promise<Narrative[]> {
-        if (relationType in this.relations) {
-            if (relationKey) {
-                if (relationKey in this.relations[relationType]) {
-                    return await Promise.all(this.relations[relationType][relationKey]
-                        .map(async (id) => await store.getNarrative(id)));
-                }
-            } else {
-                let result: Narrative[] = [];
-                for (let key in this.relations[relationType]) {
-                    result = result.concat(await Promise.all(this.relations[relationType][key]
-                        .map(async (id) => await store.getNarrative(id))));
-                }
-                return result;
-            }
-        }
-        return [];
-    }
 
     // Serde
     private serializers: {[format: string]: NarrativeSerializer} = {};
@@ -98,7 +66,7 @@ export interface NarrativeSerializer {
 class DefaultSerializer implements NarrativeSerializer {
     // replacer function for JSON.stringify to exclude key serializer
     replacer(key: string, value: any): any {
-        if(key == "serializers") return undefined;
+        if(key == "serializers" || key == "relations") return undefined;
         return value;
     }
     serialize(narrative: Narrative): string {
