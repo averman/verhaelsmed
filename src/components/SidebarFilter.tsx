@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, IconButton, TextField, Button, Select, MenuItem, FormControl, InputLabel, Card, CardContent, CardActions, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Narrative from '../core/Narrative';
+import {db} from '../utils/IndexedDbUtils';
 
 interface FilterCriteria {
     id: string; // Unique identifier for each filter
@@ -23,6 +24,7 @@ export interface NarrativeItemsProps {
 }
 
 interface SidebarFilterProps {
+    projectId: string;
     narratives: Narrative[];
     // children: React.ReactNode;
     switchEditing: (currentId: string, next: boolean) => void;
@@ -37,12 +39,29 @@ interface SidebarFilterProps {
 // Define the special filter as a constant outside the component to prevent it from being reinitialized on each render
 const defaultSpecialFilter: FilterCriteria = { id: 'special', type: 'show', criteria: 'all', tag: '', value: '' };
 
-function SidebarFilter({ narratives, switchEditing, editableBlockId, handleContextMenu,
+function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, handleContextMenu,
     handleEditorSelect, isSelected, component: ChildComponent }: SidebarFilterProps) {
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [filters, setFilters] = useState<FilterCriteria[]>([defaultSpecialFilter]);
+    const [filtersLoaded, setFiltersLoaded] = useState<boolean>(false);
 
     const handleToggleSidebar = () => setSidebarVisible(!sidebarVisible);
+
+    useEffect(() => {
+        if(filtersLoaded) db.settingPersistance.put({id: 'filters', projectId, data: filters});
+    }, [filters, filtersLoaded, projectId]);
+
+    useEffect(() => {
+        const loadFilters = async () => {
+            const loadingFilters = await db.settingPersistance.get(['filters', projectId]);
+            if (loadingFilters) {
+                setFilters(loadingFilters.data);
+            }
+            setFiltersLoaded(true);
+        };
+        loadFilters();
+    }, []);
+
     const handleAddFilter = () => {
         const newFilter: FilterCriteria = {
             id: Date.now().toString(), // Simple unique ID based on timestamp

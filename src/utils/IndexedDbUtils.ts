@@ -18,15 +18,18 @@ export interface NarrativeRaw {
 class FormDatabase extends Dexie {
   public formState: Dexie.Table<FormState, string>;
   public narrative: Dexie.Table<NarrativeRaw, [string, string]>;
+  public settingPersistance: Dexie.Table<any, [string, string]>;
 
   constructor() {
     super("FormDatabase");
-    this.version(5).stores({
+    this.version(6).stores({
       formState: 'id', // Include lastUpdatedTime in the schema
+      settingPersistance: '[id+projectId]',
       narrative: '[id+projectId], projectId, narrativeType'
     });
     this.formState = this.table("formState");
     this.narrative = this.table("narrative");
+    this.settingPersistance = this.table("settingPersistance");
   }
 
   // Define the safePut function
@@ -44,7 +47,7 @@ class FormDatabase extends Dexie {
   async getAllProjectIds() {
     const allIds = await this.formState.toCollection().primaryKeys();
     // Return all the primary keys except "settings"
-    return allIds.filter((id) => id !== "settings");
+    return allIds.filter((id) => id !== "settings" && id.length === 8);
   } 
 
   

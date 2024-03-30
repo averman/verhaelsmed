@@ -5,9 +5,11 @@ import ProseNarrative from '../core/ProseNarrative';
 import ContextMenu, { ContextMenuItem } from '../components/ContextMenu'
 import TaggingModal from '../components/TaggingModal'; 
 import SidebarFilter from '../components/SidebarFilter';
+import { useSettingsData } from '../contexts/SettingsDataContext';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
+    const { settingsData } = useSettingsData();
     const [editableBlockId, setEditableBlockId] = useState(-1);
     const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number; visible: boolean }>({ mouseX: 0, mouseY: 0, visible: false });
@@ -196,6 +198,7 @@ const Story: React.FC = () => {
     return (
         <div>
             <SidebarFilter 
+                projectId={settingsData.projectId}
                 narratives={Object.values(narrativeData['prose'] || {})} 
                 switchEditing={switchEditing} 
                 editableBlockId={editableBlockId}
