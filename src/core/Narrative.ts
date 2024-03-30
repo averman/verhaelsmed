@@ -13,10 +13,10 @@ export default abstract class Narrative {
     }
     addTag(tag: string, value: string): void {
         if(!this.tags[tag]) this.tags[tag] = [];
+        if(this.tags[tag].includes(value)) return;
         this.tags[tag].push(value)
     }
     removeTag(tag: string, value?: string): void {
-        console.log("removing tag", tag, value)
         if(typeof value == "undefined") {
             delete this.tags[tag];
             return;
@@ -53,6 +53,13 @@ export default abstract class Narrative {
         if (format in this.serializers) this.serializers[format].deserialize(data, this);
         else throw new Error("No serializer for format " + format);
     }
+
+    // Grouping
+    group: string = "";
+    isAGroup: boolean = false;
+    groupVisibility: boolean = false;
+
+    abstract groupText(narratives: Narrative[]): string;
     
 }
 

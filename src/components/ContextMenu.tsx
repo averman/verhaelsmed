@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 
 export interface ContextMenuItem {
     title: string;
-    action: () => void;
+    action: (e: any, targetId: string | string[]) => void;
 }
 
 interface ContextMenuProps {
@@ -14,9 +14,10 @@ interface ContextMenuProps {
     mouseY: number;
     visible: boolean;
     menuItems: ContextMenuItem[];
+    targetId: string | string[];
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({ mouseX, mouseY, visible, menuItems }) => {
+const ContextMenu: React.FC<ContextMenuProps> = ({ mouseX, mouseY, visible, menuItems, targetId }) => {
     if (!visible) return null;
 
     return (
@@ -33,7 +34,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ mouseX, mouseY, visible, menu
             }}
         >
             {menuItems.map((item, index) => (
-                <Typography key={index} sx={{ p: 1, cursor: 'pointer' }} onClick={item.action}>
+                <Typography key={index} sx={{ p: 1, cursor: 'pointer' }} onClick={e=>item.action(e,targetId)}>
                     {item.title}
                 </Typography>
             ))}

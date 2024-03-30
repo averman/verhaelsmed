@@ -16,21 +16,37 @@ export default class ProseNarrative extends Narrative  {
         this.text = text;
         this.addSerializer("default", defaultSerializer);
     }
+
+    groupText(narratives: Narrative[]): string {
+        return narratives.map(n=>n.getNormalizedText()).join("\n\n\n");
+    }
 }
 
 narrativeFactory.register(
     "prose", 
-    (id: string, timeline: number, text: string) => {
+    (id: string, timeline: number, text: string, format: string='default') => {
         let res = new ProseNarrative(id, timeline, '')
-        res.deserialize('default', text);
+        if(format == 'default') res.deserialize('default', text);
+        else if (format == 'fromText') res.text = text;
+        else throw `[ProseNarrative] ERROR: unknown Factory Format: ${format}`
         return res
     }
 );
 
+function deepCopy(target: ProseNarrative, source: ProseNarrative): void {
+    Object.assign(target, source);
+    // deep copy tags
+    target.tags = {};
+    for (let key in source.tags) {
+        target.tags[key] = Array.from(source.tags[key]);
+    }
+}
+
 narrativeFactory.registerOnChange(
     "prose",
     (narrative: Narrative, dict: NarrativeDict) => {
-        if(!(narrative instanceof ProseNarrative)) return;
+        if(!(narrative.narrativeType === "prose")) return;
+        if(narrative.isAGroup) return; //do not split a group
         if(narrative.getNormalizedText().indexOf("\n\n\n")==-1) return;
         let parts = narrative.getNormalizedText().split(/[\n]{3,}/)
         if(parts.length==0) return;
@@ -52,7 +68,8 @@ narrativeFactory.registerOnChange(
                 newTimeline = a + (i+1)*((b - a)/(parts.length+2))
             }
             let newNarrative = new ProseNarrative(newId, newTimeline, '');
-            newNarrative = Object.assign(newNarrative, narrative);
+            deepCopy(newNarrative, narrative as ProseNarrative);
+
             newNarrative.timeline = newTimeline;
             newNarrative.id = newId;
             newNarrative.text = parts[i];

@@ -6,6 +6,9 @@ import ContextMenu, { ContextMenuItem } from '../components/ContextMenu'
 import TaggingModal from '../components/TaggingModal'; 
 import SidebarFilter from '../components/SidebarFilter';
 import { useSettingsData } from '../contexts/SettingsDataContext';
+import narrativeFactory from '../core/NarrativeFactory';
+import { randomString } from '../utils/Random';
+import { getCommonTags } from '../utils/CommonUtils';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
@@ -54,6 +57,44 @@ const Story: React.FC = () => {
                 title: 'tags',
                 action: ()=>setTagModalOpen(true)
             },
+            {
+                title: 'group',
+                action: (e: any, targetId: string | string[])=>{
+                    // make new ID that is unique
+                    let narrativeId = "prose-group-"+randomString(6);
+                    while(narrativeData['prose'][narrativeId]){
+                        narrativeId = "prose-group-"+randomString(6);
+                    }
+                    narrativeFactory.group(selectedEditors.map(x=>narrativeData['prose'][x]), narrativeId, narrativeData)
+                    setNarrativeData({...narrativeData});
+                }
+            },
+            {
+                title: 'ungroup',
+                action: (e: any, targetId: string | string[])=>{
+                    if(Array.isArray(targetId)) return;
+                    narrativeFactory.ungroup(narrativeData['prose'][targetId], narrativeData)
+                    setNarrativeData({...narrativeData});
+                }
+            },
+            {
+                title: 'delete',
+                action: (e: any, targetId: string | string[])=>{
+                    let toBeDeleted = []
+                    if(Array.isArray(targetId)) toBeDeleted = targetId;
+                    else toBeDeleted = [targetId];
+                    toBeDeleted.forEach(x=>delete narrativeData['prose'][x]);
+                    setNarrativeData({...narrativeData});
+                }
+            },
+            {
+                title: 'remove from group',
+                action: (e: any, targetId: string | string[])=>{
+                    if(Array.isArray(targetId)) return;
+                    narrativeFactory.removeFromGroup(narrativeData['prose'][targetId], narrativeData)
+                    setNarrativeData({...narrativeData});
+                }
+            }
         ];
         return items.map(x=>defaultItems.filter(y=>y.title==x)[0]).filter(x=>x)
     }
@@ -69,26 +110,7 @@ const Story: React.FC = () => {
             setNarrativeId(narrativeId);
             setCurrentTags(narrativeTags);
         } else {
-            // set new tag Object that is a key value pair that exist on all selected editors
-            let newTags: {[key: string]: string[]} = {};
-            // get all distinct keys from all selected editors
-            let keys = selectedEditors.map(x=>Object.keys(narrativeData['prose'][x].tags)).reduce((acc, val) => acc.filter(x => val.includes(x)));
-            // filter only keys that exist in all selected editors
-            keys = keys.filter(x=>selectedEditors.map(y=>narrativeData['prose'][y].tags[x]).reduce((acc, val) => acc && val.length>0, true));
-            for(let key of keys){
-                // get all distinct values from all selected editors
-                let values = selectedEditors.map(x=>narrativeData['prose'][x].tags[key]).reduce((acc, val) => acc.filter(x => val.includes(x)));
-                // filter only values that exist in all selected editors
-                values = values.filter(x=>selectedEditors.map(y=>narrativeData['prose'][y].tags[key]).reduce((acc, val) => acc && val.includes(x), true));
-                for(let value of values){
-                    if(newTags[key]){
-                        newTags[key].push(value)
-                    } else {
-                        newTags[key] = [value]
-                    }
-                }
-            }
-            setCurrentTags(newTags);
+            setCurrentTags(getCommonTags(selectedEditors.map(x=>narrativeData['prose'][x].tags)));
         }
 
         if(selectedEditors.length==0 || selectedEditors.includes(narrativeId)){
@@ -212,6 +234,7 @@ const Story: React.FC = () => {
                 mouseY={contextMenu.mouseY}
                 visible={contextMenu.visible}
                 menuItems={contextMenuItems}
+                targetId={narrativeId}
             />
             <TaggingModal
                 open={tagModalOpen}
