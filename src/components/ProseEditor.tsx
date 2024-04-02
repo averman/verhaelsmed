@@ -9,10 +9,15 @@ import { useNarrativeData } from '../contexts/NarrativeDataContext';
 import ProseNarrative from '../core/ProseNarrative'
 import Narrative from '../core/Narrative';
 import { NarrativeItemsProps } from './SidebarFilter';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+// Updated icon imports
+import GroupIcon from '@mui/icons-material/Inventory'; // Placeholder for goToGroup
+import UngroupIcon from '@mui/icons-material/Unarchive'; // Placeholder for goToGroupMember
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
+// New icons for summary navigation
+import SummarizeIcon from '@mui/icons-material/Compress'; // For navigating to a more summarized version
+import DetailsIcon from '@mui/icons-material/Expand'; // For navigating to a more detailed version
+
 
 
 const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing, initialEditingState,
@@ -34,16 +39,25 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
             n.groupVisibility = false;
         })
         groupNarrative.groupVisibility = true;
-        setNarrativeData({...narrativeData})
+        setNarrativeData({ ...narrativeData })
     }
 
     const goToGroupMember = () => {
         let memberNarratives = Object.values(narrativeData['prose']).filter(n => n.group === narrative?.id);
         memberNarratives.forEach(n => {
-            if(n.isAGroup) n.groupVisibility = true;
+            if (n.isAGroup) n.groupVisibility = true;
         })
-        if(narrative && narrative.isAGroup) narrative.groupVisibility = false;
+        if (narrative && narrative.isAGroup) narrative.groupVisibility = false;
     };
+
+    const handleIncreaseSummaryLevel = () => {
+        narrative && narrative.summaryLevel++;
+    };
+
+    const handleDecreaseSummaryLevel = () => {
+        narrative && narrative.summaryLevel--;
+    };
+
 
     useEffect(() => {
         if (narrativeData && narrativeData["prose"]) {
@@ -73,7 +87,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
 
     const handleBlur = () => {
         const newContent = editableContentRef.current?.innerText || '';
-        if (newContent.trim() === '') {
+        if (newContent.trim() === '' && narrative?.summaryLevel === -1) {
             handleDelete()
         } else {
             handleEdit()
@@ -86,7 +100,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()) {
             const narratives = narrativeData['prose'];
             const narrative = narratives[narrativeId] as ProseNarrative;
-            narrative.text = newContent;
+            narrative.setNormalizedText(newContent);
             setNarrativeData({ ...narrativeData, 'prose': { ...narratives, [narrativeId]: narrative } });
         }
     };
@@ -108,7 +122,11 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
     }
 
     return (
-        <Card onDoubleClick={handleDoubleClick} style={{ backgroundColor: isSelected ? '#f0f0f0' : '' }} onClick={(e) => {
+        <Card onDoubleClick={handleDoubleClick} style={{
+            backgroundColor: isSelected ? '#f0f0f0' : '',
+            border: '1px solid #eeeeee', // Adjust the color and width as needed
+            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)' // Optional: Add a subtle shadow for depth
+        }} onClick={(e) => {
             if (e.ctrlKey || e.metaKey) { // Check for Ctrl or Cmd key
                 e.stopPropagation(); // Prevent event from reaching the document
                 handleEditorSelect(narrativeId);
@@ -118,13 +136,22 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                 <Box position="absolute" top={0} right={0} zIndex="tooltip">
                     {narrative?.group && (
                         <IconButton onClick={goToGroup} size="small">
-                            <ArrowUpwardIcon fontSize="inherit" />
+                            <GroupIcon fontSize="inherit" />
                         </IconButton>
                     )}
-                    {/* Assuming some logic to check if narrative has members */}
                     {narrative?.isAGroup && (
                         <IconButton onClick={goToGroupMember} size="small">
-                            <ArrowDownwardIcon fontSize="inherit" />
+                            <UngroupIcon fontSize="inherit" />
+                        </IconButton>
+                    )}
+                    {narrative && narrative.summaryLevel > -1 && (
+                        <IconButton onClick={handleDecreaseSummaryLevel} size="small">
+                            <DetailsIcon fontSize="inherit" />
+                        </IconButton>
+                    )}
+                    {narrative?.haveSummary() && (
+                        <IconButton onClick={handleIncreaseSummaryLevel} size="small">
+                            <SummarizeIcon fontSize="inherit" />
                         </IconButton>
                     )}
                 </Box>
@@ -146,7 +173,8 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                                     const contextMenus = ["tags", "delete"];
                                     if (isSelected && (narrative?.group === "")) contextMenus.push("group");
                                     if (!isSelected && narrative?.isAGroup) contextMenus.push("ungroup");
-                                    if(narrative?.group !== "") contextMenus.push("remove from group");
+                                    if (!isSelected && narrative?.group !== "") contextMenus.push("remove from group");
+                                    if (!isSelected) contextMenus.push("generate summary");
                                     handleContextMenu(e, contextMenus, narrativeId)
                                 }}></div>
                         </Typography>

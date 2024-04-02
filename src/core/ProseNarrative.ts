@@ -5,9 +5,19 @@ import narrativeFactory from "./NarrativeFactory";
 
 export default class ProseNarrative extends Narrative  {
     narrativeType: string = "prose";
-    text: string = "";
-    getNormalizedText(): string { return this.text }
-    blockType: string = "unstyled";
+    private text: string = "";
+    setNormalizedText(text: string): void {
+        if(this.summaryLevel == -1) this.text = text;
+        else this.summaries[this.summaryLevel] = text;
+    }
+    getNormalizedText(): string { 
+        while((typeof this.summaries[this.summaryLevel] == 'undefined') && this.summaryLevel >= 0){
+            this.summaryLevel--;
+        }
+        if(this.summaryLevel >= 0) return this.summaries[this.summaryLevel];
+        return this.text 
+    }
+    summaries: string[] = [];
     
     constructor(id: string, timeline: number, text: string, blockType?: string) {
         super();
@@ -15,6 +25,10 @@ export default class ProseNarrative extends Narrative  {
         this.timeline = timeline;
         this.text = text;
         this.addSerializer("default", defaultSerializer);
+    }
+
+    haveSummary(): boolean {
+        return typeof this.summaries[this.summaryLevel+1] !== "undefined";
     }
 
     groupText(narratives: Narrative[]): string {
@@ -27,7 +41,7 @@ narrativeFactory.register(
     (id: string, timeline: number, text: string, format: string='default') => {
         let res = new ProseNarrative(id, timeline, '')
         if(format == 'default') res.deserialize('default', text);
-        else if (format == 'fromText') res.text = text;
+        else if (format == 'fromText') res.setNormalizedText(text);
         else throw `[ProseNarrative] ERROR: unknown Factory Format: ${format}`
         return res
     }
@@ -40,6 +54,9 @@ function deepCopy(target: ProseNarrative, source: ProseNarrative): void {
     for (let key in source.tags) {
         target.tags[key] = Array.from(source.tags[key]);
     }
+    // delete summaries
+    target.summaries = [];
+    target.summaryLevel = -1;
 }
 
 narrativeFactory.registerOnChange(
@@ -72,7 +89,7 @@ narrativeFactory.registerOnChange(
 
             newNarrative.timeline = newTimeline;
             newNarrative.id = newId;
-            newNarrative.text = parts[i];
+            newNarrative.setNormalizedText(parts[i]);
             dict["prose"][newId] = newNarrative;
         }
     }

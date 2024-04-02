@@ -37,6 +37,8 @@ export default abstract class Narrative {
     }
 
     // Story
+    summaryLevel: number = -1;
+    abstract haveSummary(): boolean;
     abstract narrativeType: string;
     abstract getNormalizedText(): string;
 

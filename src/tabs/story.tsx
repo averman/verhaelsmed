@@ -9,6 +9,7 @@ import { useSettingsData } from '../contexts/SettingsDataContext';
 import narrativeFactory from '../core/NarrativeFactory';
 import { randomString } from '../utils/Random';
 import { getCommonTags } from '../utils/CommonUtils';
+import ButtonSelectModal from '../components/ButtonSelectModal';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
@@ -22,6 +23,31 @@ const Story: React.FC = () => {
     const [currentTags, setCurrentTags] = useState<{ [key: string]: string[] }>({});
     const [knownTags, setKnownTags] = useState<string[]>([]);
     const [narrativeId, setNarrativeId] = useState<string[] | string>("");
+    const [summaryOpen, setSummaryOpen] = useState(false);
+  
+    const handleSummaryOpen = () => setSummaryOpen(true);
+    const handleSummaryClose = () => setSummaryOpen(false);
+  
+    const buttons = [
+      { title: 'Blank', isVisible: () => true, onClick: (e: React.MouseEvent, target: any, title: string) => {
+        let targetId = target.toString();
+        let narrative = narrativeData['prose'][targetId] as ProseNarrative;
+        narrative.summaryLevel++;
+        narrative.summaries[narrative.summaryLevel] = '';
+        setNarrativeData({...narrativeData});
+        handleSummaryClose();
+      } },
+      { title: 'Full Content', isVisible: () => true, onClick: (e: React.MouseEvent, target: any, title: string) => {
+        let targetId = target.toString();
+        let narrative = narrativeData['prose'][targetId] as ProseNarrative;
+        let text = narrative.getNormalizedText();
+        narrative.summaryLevel++;
+        narrative.summaries[narrative.summaryLevel] = text;
+        setNarrativeData({...narrativeData});
+        handleSummaryClose();
+      } },
+      { title: 'Auto Generate', isVisible: () => true, onClick: () => console.log('Visible Button clicked') }
+    ];
 
 
     useEffect(() => {
@@ -89,14 +115,24 @@ const Story: React.FC = () => {
             },
             {
                 title: 'remove from group',
+                filter: ()=>selectedEditors.length==0,
                 action: (e: any, targetId: string | string[])=>{
                     if(Array.isArray(targetId)) return;
                     narrativeFactory.removeFromGroup(narrativeData['prose'][targetId], narrativeData)
                     setNarrativeData({...narrativeData});
                 }
+            },
+            {
+                title: 'generate summary',
+                filter: ()=>selectedEditors.length==0,
+                action: (e: any, targetId: string | string[])=>{
+                    if(Array.isArray(targetId)) return;
+                    // invoke create summary window modal with parameter targetId passed
+                    setSummaryOpen(true);
+                }
             }
         ];
-        return items.map(x=>defaultItems.filter(y=>y.title==x)[0]).filter(x=>x)
+        return items.map(x=>defaultItems.filter(y=>y.title==x)[0]).filter(x=>x).filter(x=>!x.filter || x.filter());
     }
 
     const closeContextMenu = () => {
@@ -243,6 +279,12 @@ const Story: React.FC = () => {
                 knownTags={knownTags}
                 applyChanges={applyTagChanges}
                 narrativeId={selectedEditors.length==0?narrativeId:selectedEditors}
+            />
+            <ButtonSelectModal
+                isOpen={summaryOpen}
+                onClose={handleSummaryClose}
+                buttons={buttons}
+                target={narrativeId}
             />
         </div>
     );
