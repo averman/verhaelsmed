@@ -8,6 +8,7 @@ import { jsonSchema } from '../models/SettingsDataModel';
 import { useSettingsData } from '../contexts/SettingsDataContext';
 import LoadModal from '../components/LoadModal';
 import { randomString } from '../utils/Random';
+import ConnectionsField from '../components/rjsf-fields/ConnectionsField';
 
 const uiSchema: UiSchema = {
   projectId: {
@@ -19,6 +20,20 @@ const uiSchema: UiSchema = {
   },
   projectDescription: {
     "ui:widget": "textarea",
+  },
+  connections: {
+    "ui:style": {
+      display: "flex",
+      "justify-content": "space-between"
+    },
+    items: {
+      "ui:title": "",
+      "ui:field": "connections",
+      "ui:style": {
+        flex: 1,
+        padding: "0 10px"
+      }
+    },
   },
 };
 
@@ -62,6 +77,7 @@ const Settings: React.FC = () => {
         schema={jsonSchema}
         uiSchema={uiSchema}
         formData={formData}
+        fields={{ connections: ConnectionsField }}
         onSubmit={handleChange}
         validator={validator}
       >
