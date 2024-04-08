@@ -9,6 +9,7 @@ import { useSettingsData } from '../contexts/SettingsDataContext';
 import LoadModal from '../components/LoadModal';
 import { randomString } from '../utils/Random';
 import ConnectionsField from '../components/rjsf-fields/ConnectionsField';
+import AgentField from '../components/rjsf-fields/AgentField';
 
 const uiSchema: UiSchema = {
   projectId: {
@@ -22,19 +23,17 @@ const uiSchema: UiSchema = {
     "ui:widget": "textarea",
   },
   connections: {
-    "ui:style": {
-      display: "flex",
-      "justify-content": "space-between"
-    },
     items: {
       "ui:title": "",
-      "ui:field": "connections",
-      "ui:style": {
-        flex: 1,
-        padding: "0 10px"
-      }
+      "ui:field": "connections"
     },
   },
+  agents: {
+    items: {
+      "ui:title": "",
+      "ui:field": "agents"
+    }
+  }
 };
 
 const Settings: React.FC = () => {
@@ -77,7 +76,7 @@ const Settings: React.FC = () => {
         schema={jsonSchema}
         uiSchema={uiSchema}
         formData={formData}
-        fields={{ connections: ConnectionsField }}
+        fields={{ connections: ConnectionsField, agents: AgentField }}
         onSubmit={handleChange}
         validator={validator}
       >

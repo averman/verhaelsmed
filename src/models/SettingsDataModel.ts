@@ -22,35 +22,15 @@ export const jsonSchema: RJSFSchema = {
         type: "array",
         title: "Connections",
         items: {
-          type: "object",
-          properties: {
-            connectionId: {
-              type: "string",
-              title: "connection name",
-            },
-            connectionHost: {
-              type: "string",
-              title: "host",
-            },
-            connectionKey: {
-              type: "string",
-              title: "apiKey",
-            },
-            maxTokenBudget: {
-              type: "number",
-              title: "Max Token Budget",
-            },
-            tags: {
-              type: "array",
-              title: "Tags",
-              items: {
-                type: "string",
-                title: "Tag",
-                enum: ["$", "$$", "$$$", "$$$$", "$$$$$", "censored", "<15B", "15B-80B", ">80B", "instruct", "roleplay", "chat", "mistral", "gpt", "llama2"] 
-              }
-            }
-          },
-        },
+          type: "object"
+        }
+      },
+      agents: {
+        type: "array",
+        title: "AI Agents",
+        items: {
+          type: "object"
+        }
       }
     },
   };
@@ -62,11 +42,53 @@ export const jsonSchema: RJSFSchema = {
     tags: string[];
     maxTokenBudget: number;
   }
+
+  export interface Agent {
+    agentName: string;
+    agentType: string;
+    description: string;
+    connectionCriteria: {
+      sortBy: string[],
+      mandatoryTag: string[],
+      negativeMandatoryTag: string[]
+    }
+    maxRetryCount: number;
+    timeout: number;
+    inputs: {
+      key: string;
+      value: string;
+    }[]
+    mainPrompt: {
+      systemContext: string,
+      instruction: string
+    }
+    parser?: {
+      type: string,
+      systemContext: string,
+      instruction: string
+    };
+    verifier?:  {
+      type: string,
+      systemContext: string,
+      instruction: string
+    };
+    decider?: {
+      type: string,
+      systemContext: string,
+      instruction: string,
+      targets: {
+        description: string,
+        targetName: string
+      }[]
+    };
+    saveAs?: string;
+  }
   
   export interface ProjectSettings {
     projectId: string;
     projectName: string;
     projectDescription?: string;
     connections?: Connection[];
+    agents?: Agent[];
   }
   

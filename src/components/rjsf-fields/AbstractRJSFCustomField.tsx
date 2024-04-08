@@ -20,21 +20,58 @@ export default abstract class AbstractRJSFCustomField<T extends LocalFormData> e
         this.setState({ editMode: true });
     };
 
-    handleChange = (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange = (name: string, isNumber: boolean = false) => (event: React.ChangeEvent<HTMLInputElement>) => {
         const { localFormData } = this.state;
         const isCheckbox = event.target.type === 'checkbox';
-        let value:any = event.target.value;
-
+        let value: any = event.target.value;
+    
+        // Handle checkbox values
         if (isCheckbox) {
-            value = event.target.checked ? [...localFormData[name], event.target.value] : localFormData[name].filter((item: any) => item !== event.target.value);
-        } else if (name === "maxTokenBudget") {
+            value = event.target.checked
+                ? [...this.getValueByPath(localFormData, name), event.target.value]
+                : this.getValueByPath(localFormData, name).filter((item: any) => item !== event.target.value);
+        } else if (isNumber) {
+            // Handle maxTokenBudget specific logic
             value = Number.parseInt(value || '0', 10);
         }
-
-        const updatedFormData = { ...localFormData, [name]: value };
+    
+        // Use a function to update the nested value
+        const updatedFormData = this.setValueByPath({ ...localFormData }, name, value);
+    
         this.setState({ localFormData: updatedFormData });
         this.props.onChange(updatedFormData);
     };
+    
+    // Function to get a value by path
+    getValueByPath = (object: any, path: string) => {
+        const keys = path.split('.');
+        let result = object;
+        for (const key of keys) {
+            if (result[key] === undefined) return undefined; // Return undefined if the path is not found
+            result = result[key];
+        }
+        return result;
+    };
+    
+    // Function to set a value by path
+    setValueByPath = (object: any, path: string, value: any) => {
+        const keys = path.split('.');
+        let current = object;
+    
+        // Iterate through the keys to the second to last, creating objects if necessary
+        for (let i = 0; i < keys.length - 1; i++) {
+            const key = keys[i];
+            if (current[key] === undefined) {
+                current[key] = {};
+            }
+            current = current[key];
+        }
+    
+        // Set the value to the last key
+        current[keys[keys.length - 1]] = value;
+        return object;
+    };
+    
 
     handleSave = () => {
         this.setState({ editMode: false });
