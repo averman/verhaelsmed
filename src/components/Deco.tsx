@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, TextField } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import exp from 'constants';
 
 export const BorderedBox: React.FC<{ title?: string, collapsible?: boolean }> = ({ title, children, collapsible }) => {
     if (collapsible)
@@ -59,3 +60,64 @@ export const BorderedBox: React.FC<{ title?: string, collapsible?: boolean }> = 
             {children}
         </Box>)
 };
+
+export const Text: React.FC<{
+    label: string,
+    value: string, 
+    onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement> 
+}> = ({ label, value, onChange }) => {
+    return <TextField
+        label={label}
+        value={value}
+        onChange={onChange}
+        margin="normal"
+        fullWidth
+        name={label.split(' ').join('')}
+    />
+}
+
+export const Dropdown: React.FC<{
+    label: string,
+    value: string,
+    options: string[], 
+    onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement> 
+}> = ({ label, value, options, onChange }) => {
+    return <TextField
+        label={label}
+        value={value}
+        onChange={onChange}
+        margin="normal"
+        fullWidth
+        name={label.split(' ').join('')}
+        select
+        SelectProps={{ native: true }}
+    >
+        <option value=""></option>
+        {options.map(type => (
+            <option key={type} value={type}>{type}</option>
+        ))}
+    </TextField>
+}
+
+export const TextArea: React.FC<{
+    label: string,
+    value: string, 
+    onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement> 
+}> = ({ label, value, onChange }) => {
+    return <TextField
+        multiline
+        label={label}
+        value={value}
+        onChange={onChange}
+        margin="normal"
+        fullWidth
+        minRows={4}
+        name={label.split(' ').join('')}
+        sx={{
+            '& .MuiOutlinedInput-root': {
+              overflow: 'auto' // Ensures the content fits within the resizable area
+            }
+          }}
+    />
+}
+
