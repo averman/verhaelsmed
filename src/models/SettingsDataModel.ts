@@ -41,6 +41,7 @@ export const jsonSchema: RJSFSchema = {
     connectionName: string;
     tags: string[];
     maxTokenBudget: number;
+    model: string;
   }
 
   export interface Agent {

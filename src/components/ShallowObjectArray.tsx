@@ -1,35 +1,38 @@
 import React, { useState, useEffect, ReactElement, useCallback, ChangeEvent } from 'react';
 import { Button, Box, Typography, IconButton, TextField } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
-import {BorderedBox} from "./Deco"
+import {BorderedBox, Text, TextArea} from "./Deco"
+import { JsxElement } from 'typescript';
 
 interface ShallowObjectArrayProps<T> {
     title?: string;
     value: T[];
-    fields: {name: string, defaultValue?: string, label?: string}[];
+    fields: {name: string, defaultValue?: string, label?: string, type?: string}[];
     onChange: (event: { target: { name: string; value: any[]; }; }) => void;
 }
 
 interface ShallowObjectProps<T> {
-    fields: {name: string, defaultValue?: string, label?: string}[];
+    fields: {name: string, defaultValue?: string, label?: string, type?: string}[];
     value?: T;
     onChange: (e: React.ChangeEvent<HTMLInputElement>, field: string) => void;
 }
 
 function ShallowObject<T>({fields, value, onChange}: ShallowObjectProps<T>): ReactElement{
+
     return <BorderedBox>
         {fields.map(field=>{
             let val: string = '';
-            let w = Math.max(25, Math.ceil((100-fields.length*2)/fields.length))+'%'
             if(field.defaultValue) val = field.defaultValue;
             if(value && (value as any)[field.name]) val = (value as any)[field.name]
-            return <TextField
-                sx={{m:1, width:w}}
-                label={field.label?field.label:field.name}
+            if(field.type === 'textarea') return <TextArea
+                label={field.label || field.name}
                 value={val}
-                onChange={(e)=>onChange(e as ChangeEvent<HTMLInputElement>,field.name)}
-                margin="normal"
-                name={field.name}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e, field.name)}
+            />
+            return <Text
+                label={field.label || field.name}
+                value={val}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e, field.name)}
             />}
         )}
     </BorderedBox>
@@ -92,9 +95,8 @@ function ShallowObjectArray<T>({ title, value, onChange, fields }: ShallowObject
                 {title}
             </Typography>
             {items.map((item, index) => (
-                <Box key={index} display="flex" alignItems="center" marginBottom={2}>
+                <Box key={index} alignItems="center" marginBottom={1}>
                     <ShallowObject 
-                        key={index}
                         fields={fields}
                         value={items[index]}
                         onChange= {(e: React.ChangeEvent<HTMLInputElement>, field: string) => {

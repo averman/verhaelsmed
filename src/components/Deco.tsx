@@ -43,12 +43,12 @@ export const BorderedBox: React.FC<{ title?: string, collapsible?: boolean }> = 
         );
     else
         return (<Box
-            width={'100%'}
             sx={{
                 border: '1px solid #ccc', // Light grey border
                 boxShadow: 'inset 0px 0px 10px #00000020', // Soft inner shadow for embossed effect
                 borderRadius: 1, // Slightly rounded corners
                 m: 1, // Margin around the box
+                p: 1,
                 backgroundColor: 'background.paper', // Use theme's paper color
             }}
         >

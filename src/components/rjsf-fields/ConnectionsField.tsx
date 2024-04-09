@@ -13,7 +13,7 @@ class ConnectionsFieldClass extends AbstractRJSFCustomField<{ [key: string]: any
             <FormControlLabel
                 control={
                     <Checkbox
-                        checked={localFormData.tags.includes(tag)}
+                        checked={Array.isArray(localFormData.tags)?localFormData.tags.includes(tag):false}
                         onChange={this.handleChange('tags')}
                         value={tag}
                     />
@@ -31,7 +31,7 @@ class ConnectionsFieldClass extends AbstractRJSFCustomField<{ [key: string]: any
                 <div style={{ fontSize: 'large' }}><strong>{localFormData.connectionId}</strong></div>
                 <a style={{ fontSize: 'small' }}>Host: {localFormData.connectionHost}</a>
                 <a style={{ fontSize: 'small' }}>Max Token Budget: {localFormData.maxTokenBudget}</a>
-                <div style={{ fontSize: 'small' }}>Tags: {localFormData.tags.join(', ')}</div>
+                <div style={{ fontSize: 'small' }}>Tags: {Array.isArray(localFormData.tags)?localFormData.tags.join(', '):''}</div>
                 <Button onClick={this.handleEdit} color="primary">Edit</Button>
             </>
         );
@@ -43,6 +43,7 @@ class ConnectionsFieldClass extends AbstractRJSFCustomField<{ [key: string]: any
                 <TextField label="Connection Name" value={this.state.localFormData.connectionId} onChange={this.handleChange('connectionId')} margin="normal" fullWidth name="connectionId" />
                 <TextField label="Connection Host" value={this.state.localFormData.connectionHost} onChange={this.handleChange('connectionHost')} margin="normal" fullWidth name="connectionHost" />
                 <TextField label="API Key" value={this.state.localFormData.connectionKey} onChange={this.handleChange('connectionKey')} margin="normal" fullWidth name="connectionKey" />
+                <TextField label="Model" value={this.state.localFormData.model} onChange={this.handleChange('model')} margin="normal" fullWidth name="model" />
                 <TextField label="Max Token Budget" type="number" value={this.state.localFormData.maxTokenBudget} onChange={this.handleChange('maxTokenBudget',true)} margin="normal" fullWidth name="maxTokenBudget" />
                 <Box>{<div>Tags:</div>}{this.renderTagCheckboxes()}</Box>
                 <Button onClick={this.handleSave} color="primary">Save</Button>

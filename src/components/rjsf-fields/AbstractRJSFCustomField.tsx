@@ -21,15 +21,20 @@ export default abstract class AbstractRJSFCustomField<T extends LocalFormData> e
     };
 
     handleChange = (name: string, isNumber: boolean = false) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        if(!event.target) return;
         const { localFormData } = this.state;
         const isCheckbox = event.target.type === 'checkbox';
         let value: any = event.target.value;
     
         // Handle checkbox values
         if (isCheckbox) {
-            value = event.target.checked
-                ? [...this.getValueByPath(localFormData, name), event.target.value]
-                : this.getValueByPath(localFormData, name).filter((item: any) => item !== event.target.value);
+            let currentCheckboxes = this.getValueByPath(localFormData, name) || [];
+            if(event.target.checked){
+                currentCheckboxes.push(event.target.value)
+            } else {
+                currentCheckboxes = currentCheckboxes.filter((item: any) => item !== event.target.value)
+            }
+            value = [...currentCheckboxes]
         } else if (isNumber) {
             // Handle maxTokenBudget specific logic
             value = Number.parseInt(value || '0', 10);
