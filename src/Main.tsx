@@ -17,7 +17,21 @@ const Main: React.FC = () => {
     setValue(newValue);
   };
 
+  function taborder(name: string): number {
+    switch (name) {
+      case 'story':
+        return 101;
+      case 'setting':
+        return 100;
+      case 'sandbox':
+        return 102;
+      default:
+        return 0;
+    }
+  }
+
   const tabs = Object.keys(TabComponents);
+  tabs.sort((a, b) => taborder(a) - taborder(b));
 
   return (
     <EditorContainer>
