@@ -65,12 +65,12 @@ const TextFieldArray: React.FC<TextFieldArrayProps> = ({ title, value, onChange,
       {items.map((item, index) => (
         <Box key={index} display="flex" alignItems="center" marginBottom={2}>
             {React.cloneElement(children, {
-                key: index,
+                key: `item-${index}`,
                 value: item,
                 onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleItemChange(index, e.target.value),
                 // Add other props as needed, depending on the child component's requirements
             })}
-            <IconButton key={index} onClick={() => handleRemoveItem(index)} color="error">
+            <IconButton key={`button-${index}`} onClick={() => handleRemoveItem(index)} color="error">
                 <RemoveCircleOutlineIcon key={index} />
             </IconButton>
         </Box>

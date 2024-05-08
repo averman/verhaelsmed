@@ -2,7 +2,6 @@ import React, { useState, useEffect, ReactElement, useCallback, ChangeEvent } fr
 import { Button, Box, Typography, IconButton, TextField } from '@mui/material';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import {BorderedBox, Text, TextArea} from "./Deco"
-import { JsxElement } from 'typescript';
 
 interface ShallowObjectArrayProps<T> {
     title?: string;
@@ -42,7 +41,7 @@ function ShallowObjectArray<T>({ title, value, onChange, fields }: ShallowObject
     const [items, setItems] = useState<T[]>(value || []);
 
     useEffect(() => {
-        console.log("items",items)
+        // console.log("items",items)
     }, [items]);
 
     const handleAddItem = () => {

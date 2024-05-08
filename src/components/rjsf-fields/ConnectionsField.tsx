@@ -4,7 +4,7 @@ import AbstractRJSFCustomField from './AbstractRJSFCustomField'
 import { FieldProps } from '@rjsf/utils';
 
 // Assuming these are the tags you have defined in your schema
-export const connectionsTags = ["$", "$$", "$$$", "$$$$", "$$$$$", "censored", "<15B", "15B-80B", ">80B", "instruct", "roleplay", "chat", "mistral", "gpt", "llama2"];
+export const connectionsTags = ["$", "$$", "$$$", "$$$$", "$$$$$", "censored", "<15B", "15B-80B", ">80B", "instruct", "roleplay", "chat", "mixture_of_expert", "gpt", "llama2", "vicuna", "alpaca"];
 
 class ConnectionsFieldClass extends AbstractRJSFCustomField<{ [key: string]: any }> {
     renderTagCheckboxes() {

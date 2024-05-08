@@ -4,7 +4,8 @@ import { BorderedBox, Dropdown } from '../components/Deco';
 import Button from '@mui/material/Button';
 import ShallowObjectArray from '../components/ShallowObjectArray';
 import { Agent } from '../models/SettingsDataModel';
-import AgentLogWindow, { AgentLog } from '../components/AgentLogs';
+import AgentLogWindow, { AgentLogs } from '../components/AgentLogs';
+import { runAgent } from '../agents/agents-utils';
 
 const Sandbox: React.FC = () => {
     const { settingsData } = useSettingsData();
@@ -14,31 +15,35 @@ const Sandbox: React.FC = () => {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [activeAgent, setActiveAgent] = useState<Agent | undefined>(undefined);
     const [inputs, setInputs] = useState<any[]>([]);
-    const [logs, setLogs] = useState<AgentLog | undefined>(undefined);
+    const [logs, setLogs] = useState<AgentLogs | undefined>(undefined);
 
     useEffect(() => {
         setAgents(settingsData?.agents || []);
         setActiveAgent(activeAgentIndex>-1?agents[activeAgentIndex]:undefined);
         if (activeAgent) {
             setInputs(activeAgent.inputs || []);
-            setActiveAgentName(`[${agents[activeAgentIndex].agentType}] ${agents[activeAgentIndex].agentName}`);
+            setActiveAgentName(`[${agents[activeAgentIndex].agentType || 'Agent'}] ${agents[activeAgentIndex].agentName}`);
         }
     }, [settingsData])
 
     useEffect(() => {
-        setAgentNames(agents.map(agent => `[${agent.agentType}] ${agent.agentName}`));
+        setAgentNames(agents.map(agent => `[${agent.agentType || "Agent"}] ${agent.agentName}`));
     }, [agents])
 
     useEffect(() => {
+        console.log('activeAgentIndex', activeAgentIndex, agents[activeAgentIndex]);
         if(activeAgentIndex>-1) {
-            setActiveAgentName(`[${agents[activeAgentIndex].agentType}] ${agents[activeAgentIndex].agentName}`);
+            setActiveAgentName(`[${agents[activeAgentIndex].agentType || 'Agent'}] ${agents[activeAgentIndex].agentName}`);
             setInputs(agents[activeAgentIndex].inputs || []);
         }
         setActiveAgent(activeAgentIndex>-1?agents[activeAgentIndex]:undefined);
     },[activeAgentIndex])
 
-    const handleSubmit = () => {
-        setLogs(new AgentLog('test'));
+    const handleSubmit = async () => {
+        const agent = agents[activeAgentIndex];
+        const agentLogs = new AgentLogs();
+        await runAgent(settingsData?.connections || [], agent, inputs, agentLogs);
+        setLogs(agentLogs);
     }
 
     return <>
@@ -49,17 +54,16 @@ const Sandbox: React.FC = () => {
                 let agentName = event.target.value as string;
                 agentName = agentName.replace(/\[.*\]/, '').trim();
                 let idx = agents.findIndex(agent => agent.agentName === agentName);
-                console.log(agentName, idx);
                 setActiveAgentIndex(idx);
             }}
-            options={agentNames}
+            options={["", ...agentNames]}
         />
         {activeAgent && (<>
             <BorderedBox title='inputs' collapsible>
                 <ShallowObjectArray
                     value = {inputs}
                     onChange = {(e: {target: {name: string, value: any[]}}) => {
-                        setInputs({...e.target.value});
+                        setInputs([...e.target.value]);
                     }}
                     fields = {[
                         {name: 'key', label: 'Key'},

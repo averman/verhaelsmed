@@ -92,7 +92,6 @@ export const Dropdown: React.FC<{
         select
         SelectProps={{ native: true }}
     >
-        <option value=""></option>
         {options.map(type => (
             <option key={type} value={type}>{type}</option>
         ))}
@@ -102,8 +101,9 @@ export const Dropdown: React.FC<{
 export const TextArea: React.FC<{
     label: string,
     value: string, 
-    onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement> 
-}> = ({ label, value, onChange }) => {
+    onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement>,
+    minRows?: number
+}> = ({ label, value, onChange, minRows }) => {
     return <TextField
         multiline
         label={label}
@@ -111,7 +111,7 @@ export const TextArea: React.FC<{
         onChange={onChange}
         margin="normal"
         fullWidth
-        minRows={4}
+        minRows={minRows || 4}
         name={label.split(' ').join('')}
         sx={{
             '& .MuiOutlinedInput-root': {
