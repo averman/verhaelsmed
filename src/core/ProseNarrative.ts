@@ -32,7 +32,7 @@ export default class ProseNarrative extends Narrative  {
     }
 
     groupText(narratives: Narrative[]): string {
-        return narratives.map(n=>n.getNormalizedText()).join("\n\n\n");
+        return narratives.map(n=>n.getNormalizedText()).join("\n\n");
     }
 }
 
@@ -54,43 +54,45 @@ function deepCopy(target: ProseNarrative, source: ProseNarrative): void {
     for (let key in source.tags) {
         target.tags[key] = Array.from(source.tags[key]);
     }
-    // delete summaries
-    target.summaries = [];
-    target.summaryLevel = -1;
+    // deep copy summaries
+    target.summaries = Array.from(source.summaries)
+    target.summaryLevel = source.summaryLevel
+}
+
+function narrativeOnChange (narrative: Narrative, dict: NarrativeDict) {
+    if(!(narrative.narrativeType === "prose")) return;
+    if(narrative.isAGroup) return; //do not split a group
+    if(narrative.getNormalizedText().indexOf("\n\n\n\n\n")==-1) return;
+    let parts = narrative.getNormalizedText().split(/\n\n\n\n\n+/)
+    if(parts.length==0) return;
+    delete dict["prose"][narrative.id];
+    let a = Math.max(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x<narrative.timeline))
+    let b = Math.min(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x>narrative.timeline))
+    for(let i=0; i<parts.length; i++){
+        let newId: string = narrative.id;
+        let newTimeline: number = narrative.timeline;
+        if(i!=0)
+            do{
+                newId = "prose-" + randomString(6);
+            } while (dict["prose"][newId]);
+        if(b == Number.POSITIVE_INFINITY) {
+            newTimeline = newTimeline + i;
+        } else if (a == Number.NEGATIVE_INFINITY) {
+            newTimeline = newTimeline - parts.length + i + 1;
+        } else {
+            newTimeline = a + (i+1)*((b - a)/(parts.length+2))
+        }
+        let newNarrative = new ProseNarrative(newId, newTimeline, '');
+        deepCopy(newNarrative, narrative as ProseNarrative);
+
+        newNarrative.timeline = newTimeline;
+        newNarrative.id = newId;
+        newNarrative.setNormalizedText(parts[i]);
+        dict["prose"][newId] = newNarrative;
+    }
 }
 
 narrativeFactory.registerOnChange(
     "prose",
-    (narrative: Narrative, dict: NarrativeDict) => {
-        if(!(narrative.narrativeType === "prose")) return;
-        if(narrative.isAGroup) return; //do not split a group
-        if(narrative.getNormalizedText().indexOf("\n\n\n")==-1) return;
-        let parts = narrative.getNormalizedText().split(/[\n]{3,}/)
-        if(parts.length==0) return;
-        delete dict["prose"][narrative.id];
-        let a = Math.max(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x<narrative.timeline))
-        let b = Math.min(...Object.values(dict["prose"]).map(x=>x.timeline).filter(x=>x>narrative.timeline))
-        for(let i=0; i<parts.length; i++){
-            let newId: string = narrative.id;
-            let newTimeline: number = narrative.timeline;
-            if(i!=0)
-                do{
-                    newId = "prose-" + randomString(6);
-                } while (dict["prose"][newId]);
-            if(b == Number.POSITIVE_INFINITY) {
-                newTimeline = newTimeline + i;
-            } else if (a == Number.NEGATIVE_INFINITY) {
-                newTimeline = newTimeline - parts.length + i + 1;
-            } else {
-                newTimeline = a + (i+1)*((b - a)/(parts.length+2))
-            }
-            let newNarrative = new ProseNarrative(newId, newTimeline, '');
-            deepCopy(newNarrative, narrative as ProseNarrative);
-
-            newNarrative.timeline = newTimeline;
-            newNarrative.id = newId;
-            newNarrative.setNormalizedText(parts[i]);
-            dict["prose"][newId] = newNarrative;
-        }
-    }
+    narrativeOnChange
 )

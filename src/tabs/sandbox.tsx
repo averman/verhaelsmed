@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import ShallowObjectArray from '../components/ShallowObjectArray';
 import { Agent } from '../models/SettingsDataModel';
 import AgentLogWindow, { AgentLogs } from '../components/AgentLogs';
-import { runAgent } from '../agents/agents-utils';
+import { useRunAgent } from '../agents/agents-utils';
 
 const Sandbox: React.FC = () => {
     const { settingsData } = useSettingsData();
@@ -39,10 +39,12 @@ const Sandbox: React.FC = () => {
         setActiveAgent(activeAgentIndex>-1?agents[activeAgentIndex]:undefined);
     },[activeAgentIndex])
 
+    const runAction = useRunAgent();
+
     const handleSubmit = async () => {
         const agent = agents[activeAgentIndex];
         const agentLogs = new AgentLogs();
-        await runAgent(settingsData?.connections || [], agent, inputs, agentLogs);
+        await runAction(agent, inputs, agentLogs);
         setLogs(agentLogs);
     }
 

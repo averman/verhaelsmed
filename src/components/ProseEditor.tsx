@@ -51,11 +51,11 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
     };
 
     const handleIncreaseSummaryLevel = () => {
-        narrative && narrative.summaryLevel++;
+        narrative && narrative.summaryLevel++ && setNarrativeData({...narrativeData});
     };
 
     const handleDecreaseSummaryLevel = () => {
-        narrative && narrative.summaryLevel--;
+        narrative && narrative.summaryLevel-- && setNarrativeData({...narrativeData});
     };
 
 
@@ -113,8 +113,9 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
 
     const handleSplit = () => {
         let newContent = editableContentRef.current?.innerText || '';
+        console.log(JSON.stringify(newContent))
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()
-            && newContent.indexOf('\n\n\n') > -1) {
+            && newContent.indexOf('\n\n\n\n\n') > -1) {
             handleEdit();
             switchEditing(narrative?.id || '', true);
             setIsEditing(false);

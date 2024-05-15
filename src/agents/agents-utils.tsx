@@ -1,17 +1,23 @@
 import { Agent, AgentAction, AgentConnectionCriteria, AgentInput, Connection, isAgentNativeAction, isAgentPrompt, isAgentScript } from "../models/SettingsDataModel";
 import { AgentLogs } from "../components/AgentLogs";
-import nativeFunctions from "./native-functions";
+import { useNativeFunctionsContext } from "../contexts/NativeFunctionsContext";
 import { validateScript } from "./script-utils";
+import { useSettingsData } from "../contexts/SettingsDataContext";
+import { useState } from "react";
 
-export const variables: { [key: string]: string } = {};
 
-export async function runAgent(connections: Connection[], agent: Agent, inputs: AgentInput[], logs: AgentLogs) {
-    let resolvedInputs = resolveInputs(inputs);
-    let actionEvocationCount: { [key: string]: number } = {};
+export function useRunAgent() {
 
-    async function runAction(option :{actionIndex?: number, actionName?: string}): Promise<void>{
+    const { saveSettingsData, settingsData } = useSettingsData();
+    const variables: { [key: string]: string } = settingsData.variables;
+
+    const nativeFunctions = useNativeFunctionsContext();
+
+    let [actionEvocationCount, setActionEvocationCount] = useState<{ [key: string]: number }>({});
+    async function runAction(option :{actionIndex?: number, actionName?: string}, agent: Agent, inputs: AgentInput[], logs: AgentLogs): Promise<void>{
         let action: AgentAction | undefined = undefined;
         let actionIndex = option.actionIndex;
+        let resolvedInputs = resolveInputs(inputs);
         
         if(typeof actionIndex !== 'undefined') {
             action = agent.agentActions[actionIndex];
@@ -43,6 +49,7 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
         } else {
             actionEvocationCount[action.name] = 1;
         }
+        setActionEvocationCount(actionEvocationCount);
 
         console.log(action);
         console.log(JSON.stringify(variables, null, 2))
@@ -50,14 +57,14 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
         let logid = `Action-${action.name}`;
         let response: string = "";
         if(isAgentPrompt(action)){
-            const connection = resolveConnection(connections, action.connectionCriteria);
+            const connection = resolveConnection(settingsData.connections || [], action.connectionCriteria);
             if(!connection) {
                 logs.error(`No connection found for agent with criteria: ${JSON.stringify(action.connectionCriteria)}`, logid);
             } else {
                 logs.info("Running Prompt Action: " + action.name, logid);
-                let context = resolvePrompt(action.systemContext, resolvedInputs);
+                let context = resolvePrompt(action.systemContext, resolvedInputs, variables);
                 logs.info(context, logid);
-                let instruction = resolvePrompt(action.instruction, resolvedInputs);
+                let instruction = resolvePrompt(action.instruction, resolvedInputs, variables);
                 logs.info(instruction, logid);
                 response = await queryToLLM(context, instruction, connection, logs);
             }
@@ -73,8 +80,9 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
         } else if (isAgentNativeAction(action)) {
             logs.info("Running Native Action: " + action.name, logid);
             let parameters: string[] = action.parameters.map(param => {
-                return param;
+                return resolveParam(param.parameter, resolvedInputs, variables);
             });
+            let nativeAction = action.nativeAction;
             if(nativeFunctions[action.nativeAction]) {
                 response = nativeFunctions[action.nativeAction](parameters);
             } else {
@@ -86,6 +94,7 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
 
         if(action.saveAs) {
             variables[action.saveAs] = response;
+            saveSettingsData(settingsData)
         }
 
         logs.info(response, logid);
@@ -104,7 +113,7 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
                     logs.info(`Targeted action: ${targetedAction?.name}`, logid);
                     if(targetedAction) {
                         logs.info(`Running targeted action: ${targetedAction.name}`, logid);
-                        return await runAction({actionName: targetedAction.name});
+                        return await runAction({actionName: targetedAction.name}, agent, inputs, logs);
                     }
                 }
             } else {
@@ -113,7 +122,7 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
             }
         } else if (typeof actionIndex !== 'undefined' && actionIndex < agent.agentActions.length-1) {
             logs.info(`Continuing to next action`, logid);
-            return runAction({actionIndex: actionIndex+1});
+            return runAction({actionIndex: actionIndex+1}, agent, inputs, logs);
         } else {
             logs.info(`No more actions to run, finishing...`, logid);
             return;
@@ -121,7 +130,10 @@ export async function runAgent(connections: Connection[], agent: Agent, inputs: 
 
     }
 
-    return await runAction({actionIndex: 0});
+    return async(agent: Agent, inputs: AgentInput[], logs: AgentLogs) => {
+        setActionEvocationCount({});
+        return await runAction({actionIndex: 0}, agent, inputs, logs);
+    }
 }
 
 function resolveConnection(connections: Connection[], agentConnectionCriteria: AgentConnectionCriteria): Connection | undefined {
@@ -142,7 +154,7 @@ function resolveInputs(inputs: AgentInput[]): { key: string, value: string }[] {
     return inputs;
 }
 
-function resolvePrompt(initialPrompt: string, inputs: { key: string, value: string }[]): string {
+function resolvePrompt(initialPrompt: string, inputs: { key: string, value: string }[], variables: { [key: string]: string } ): string {
     let result: RegExpExecArray | null;
     let currentPrompt = initialPrompt;
     do {
@@ -198,3 +210,22 @@ function resolveScript(script: string, resolvedInputs: { key: string; value: str
 
     return script;
 }
+function resolveParam(param: string, resolvedInputs: { key: string; value: string; }[], variables: { [key: string]: string; }): any {
+    let result: RegExpExecArray | null;
+    let currentParam = param;
+    do {
+        result = /\{\{([^\\{\\}]+)\}\}/g.exec(currentParam)
+        if (result) {
+            let [match, value] = result;
+            if (resolvedInputs.find(input => input.key === value)) {
+                currentParam = currentParam.replace(match, resolvedInputs.find(input => input.key === value)!.value);
+            } else if (variables[value]) {
+                currentParam = currentParam.replace(match, variables[value]);
+            } else {
+                currentParam = currentParam.replace(match, '');
+            }
+        }
+    } while (result)
+    return currentParam;
+}
+

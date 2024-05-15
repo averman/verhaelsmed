@@ -35,10 +35,9 @@ class AgentFieldClass extends AbstractRJSFCustomField<{ [key: string]: any }> {
                     value={this.state.localFormData.agentName}
                     onChange={this.handleChange('agentName')}
                 />
-                <Dropdown
+                <Text
                     label="Agent Type"
                     value={this.state.localFormData.agentType}
-                    options={agentTypes}
                     onChange={this.handleChange('agentType')}
                 />
                 <TextArea

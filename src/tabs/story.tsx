@@ -10,10 +10,12 @@ import narrativeFactory from '../core/NarrativeFactory';
 import { randomString } from '../utils/Random';
 import { getCommonTags } from '../utils/CommonUtils';
 import ButtonSelectModal from '../components/ButtonSelectModal';
+import { useRunAgent } from '../agents/agents-utils';
+import { AgentLogs } from '../components/AgentLogs';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
-    const { settingsData } = useSettingsData();
+    const { settingsData, saveSettingsData } = useSettingsData();
     const [editableBlockId, setEditableBlockId] = useState(-1);
     const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number; visible: boolean }>({ mouseX: 0, mouseY: 0, visible: false });
@@ -27,6 +29,7 @@ const Story: React.FC = () => {
   
     const handleSummaryOpen = () => setSummaryOpen(true);
     const handleSummaryClose = () => setSummaryOpen(false);
+    const runAgent = useRunAgent();
   
     const buttons = [
       { title: 'Blank', isVisible: () => true, onClick: (e: React.MouseEvent, target: any, title: string) => {
@@ -46,7 +49,24 @@ const Story: React.FC = () => {
         setNarrativeData({...narrativeData});
         handleSummaryClose();
       } },
-      { title: 'Auto Generate', isVisible: () => true, onClick: () => console.log('Visible Button clicked') }
+      { title: 'Auto Generate', isVisible: () => true, onClick: async(e: React.MouseEvent, target: any, title: string) => {
+        let targetId = target.toString();
+        let narrative = narrativeData['prose'][targetId] as ProseNarrative;
+        let text = narrative.getNormalizedText();
+        narrative.summaryLevel++;
+        settingsData.variables["narrative_target_id"] = targetId;
+        saveSettingsData(settingsData);
+        let agent = settingsData?.agents?.find(x=>['summarize', 'summarizer', 'summary'].find(y=>x.agentType==y));
+        if(!agent) {
+            narrative.summaries[narrative.summaryLevel] = 'error in generating summary, no summarizer agent found';
+            handleSummaryClose();
+            return;
+        }
+        narrative.summaries[narrative.summaryLevel] = 'generating summary...';
+        setNarrativeData({...narrativeData});
+        runAgent(agent, [{key: "body", value: text}], new AgentLogs());
+        handleSummaryClose();
+      } }
     ];
 
 
@@ -93,6 +113,7 @@ const Story: React.FC = () => {
                     }
                     narrativeFactory.group(selectedEditors.map(x=>narrativeData['prose'][x]), narrativeId, narrativeData)
                     setNarrativeData({...narrativeData});
+                    handleSummaryClose();
                 }
             },
             {
@@ -101,6 +122,7 @@ const Story: React.FC = () => {
                     if(Array.isArray(targetId)) return;
                     narrativeFactory.ungroup(narrativeData['prose'][targetId], narrativeData)
                     setNarrativeData({...narrativeData});
+                    handleSummaryClose();
                 }
             },
             {
@@ -111,6 +133,7 @@ const Story: React.FC = () => {
                     else toBeDeleted = [targetId];
                     toBeDeleted.forEach(x=>delete narrativeData['prose'][x]);
                     setNarrativeData({...narrativeData});
+                    handleSummaryClose();
                 }
             },
             {
@@ -120,6 +143,7 @@ const Story: React.FC = () => {
                     if(Array.isArray(targetId)) return;
                     narrativeFactory.removeFromGroup(narrativeData['prose'][targetId], narrativeData)
                     setNarrativeData({...narrativeData});
+                    handleSummaryClose();
                 }
             },
             {

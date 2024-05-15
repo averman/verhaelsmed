@@ -31,6 +31,12 @@ export const jsonSchema: RJSFSchema = {
         items: {
           type: "object"
         }
+      },
+      variables: {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
       }
     },
   };
@@ -87,11 +93,11 @@ export const jsonSchema: RJSFSchema = {
 
   export interface AgentNativeAction extends AgentAction{
     nativeAction: string;
-    parameters: string[];
+    parameters: {parameter: string}[];
   }
 
   export function isAgentNativeAction(action: AgentAction): action is AgentNativeAction {
-    return action.type === 'native' && 'nativeAction' in action && 'parameters' in action;
+    return action.type === 'nativeAction' && 'nativeAction' in action && 'parameters' in action;
   }
 
   export interface Agent {
@@ -102,29 +108,6 @@ export const jsonSchema: RJSFSchema = {
     timeout: number;
     inputs: AgentInput[];
     agentActions: (AgentPrompt | AgentScript | AgentNativeAction) []
-    // mainPrompt: {
-    //   systemContext: string,
-    //   instruction: string
-    // }
-    // parser?: {
-    //   type: string,
-    //   systemContext: string,
-    //   instruction: string
-    // };
-    // validator?:  {
-    //   type: string,
-    //   systemContext: string,
-    //   instruction: string
-    // };
-    // decider?: {
-    //   type: string,
-    //   systemContext: string,
-    //   instruction: string,
-    //   targets: {
-    //     description: string,
-    //     targetName: string
-    //   }[]
-    // };
     saveAs?: string;
   }
   
@@ -134,5 +117,6 @@ export const jsonSchema: RJSFSchema = {
     projectDescription?: string;
     connections?: Connection[];
     agents?: Agent[];
+    variables: { [key: string]: string };
   }
   
