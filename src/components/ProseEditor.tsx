@@ -175,7 +175,8 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                                     if (isSelected && (narrative?.group === "")) contextMenus.push("group");
                                     if (!isSelected && narrative?.isAGroup) contextMenus.push("ungroup");
                                     if (!isSelected && narrative?.group !== "") contextMenus.push("remove from group");
-                                    if (!isSelected) contextMenus.push("generate summary");
+                                    if (!isSelected) contextMenus.push("create summary");
+                                    if (!isSelected) contextMenus.push("generate text");
                                     handleContextMenu(e, contextMenus, narrativeId)
                                 }}></div>
                         </Typography>

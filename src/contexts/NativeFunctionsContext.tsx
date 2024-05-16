@@ -45,7 +45,7 @@ export const NativeFunctionsProvider: React.FC<NativeFunctionsProviderProps> = (
             let targetId = settingsData?.variables['narrative_target_id'];
             if (!targetId) return 'No target id found';
             let narrative = narrativeData['prose'][targetId] as ProseNarrative;
-            narrative.summaries[narrative.summaryLevel] = params[0];
+            narrative.setNormalizedText(params[0]);
             setNarrativeData({ ...narrativeData });
             return 'narrative set successfully';
         },

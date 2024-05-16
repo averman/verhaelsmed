@@ -12,6 +12,7 @@ import { getCommonTags } from '../utils/CommonUtils';
 import ButtonSelectModal from '../components/ButtonSelectModal';
 import { useRunAgent } from '../agents/agents-utils';
 import { AgentLogs } from '../components/AgentLogs';
+import LoadModal from '../components/LoadModal';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
@@ -25,10 +26,15 @@ const Story: React.FC = () => {
     const [currentTags, setCurrentTags] = useState<{ [key: string]: string[] }>({});
     const [knownTags, setKnownTags] = useState<string[]>([]);
     const [narrativeId, setNarrativeId] = useState<string[] | string>("");
+    const [targetNarrative, setTargetNarrative] = useState<ProseNarrative | undefined>(undefined);
     const [summaryOpen, setSummaryOpen] = useState(false);
+    const [generateOpen, setGenerateOpen] = useState(false);
   
     const handleSummaryOpen = () => setSummaryOpen(true);
     const handleSummaryClose = () => setSummaryOpen(false);
+    const handleGenerateOpen = () => setGenerateOpen(true);
+    const handleGenerateClose = () => setGenerateOpen(false);
+    const handleContextMenuClose = () => setContextMenu({ mouseX: 0, mouseY: 0, visible: false });
     const runAgent = useRunAgent();
   
     const buttons = [
@@ -122,7 +128,7 @@ const Story: React.FC = () => {
                     if(Array.isArray(targetId)) return;
                     narrativeFactory.ungroup(narrativeData['prose'][targetId], narrativeData)
                     setNarrativeData({...narrativeData});
-                    handleSummaryClose();
+                    handleContextMenuClose();
                 }
             },
             {
@@ -133,7 +139,7 @@ const Story: React.FC = () => {
                     else toBeDeleted = [targetId];
                     toBeDeleted.forEach(x=>delete narrativeData['prose'][x]);
                     setNarrativeData({...narrativeData});
-                    handleSummaryClose();
+                    handleContextMenuClose();
                 }
             },
             {
@@ -143,16 +149,31 @@ const Story: React.FC = () => {
                     if(Array.isArray(targetId)) return;
                     narrativeFactory.removeFromGroup(narrativeData['prose'][targetId], narrativeData)
                     setNarrativeData({...narrativeData});
-                    handleSummaryClose();
+                    handleContextMenuClose();
                 }
             },
             {
-                title: 'generate summary',
+                title: 'create summary',
                 filter: ()=>selectedEditors.length==0,
                 action: (e: any, targetId: string | string[])=>{
                     if(Array.isArray(targetId)) return;
                     // invoke create summary window modal with parameter targetId passed
-                    setSummaryOpen(true);
+                    handleContextMenuClose()
+                    handleSummaryOpen();
+                }
+            },
+            {
+                title: 'generate text',
+                filter: ()=>selectedEditors.length==0,
+                action: (e: any, targetId: string | string[])=>{
+                    if(Array.isArray(targetId)) return;
+                    handleContextMenuClose();
+                    settingsData.variables["narrative_target_id"] = targetId;
+                    let narrative = narrativeData['prose'][targetId] as ProseNarrative;
+                    // let text = narrative.getNormalizedText();
+                    // settingsData.variables["generatedInput"] = text;
+                    setTargetNarrative(narrative);
+                    handleGenerateOpen();
                 }
             }
         ];
@@ -273,7 +294,13 @@ const Story: React.FC = () => {
         }
     };
     
-    
+    const handleGenerate = async (agentId: string): Promise<void> => {
+        let agent = settingsData?.agents?.find(x=>x.agentName==agentId);
+        if(!agent) return;
+        let narrative = targetNarrative;
+        runAgent(agent, [{key: "body", value: narrative?.getNormalizedText() || ""}], new AgentLogs());
+        handleGenerateClose();
+    }
 
 
 
@@ -309,6 +336,16 @@ const Story: React.FC = () => {
                 onClose={handleSummaryClose}
                 buttons={buttons}
                 target={narrativeId}
+            />
+            <LoadModal
+                open={generateOpen}
+                onClose={handleGenerateClose}
+                items={
+                    settingsData?.agents?.filter(x=>['generate', 'generation', 'generator'].indexOf(x.agentType) > -1)
+                    .map(x=>({name: x.agentName, id: x.agentName, description: x.description}))
+                    || []
+                }
+                onSuccess={handleGenerate}
             />
         </div>
     );
