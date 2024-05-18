@@ -13,10 +13,13 @@ import ButtonSelectModal from '../components/ButtonSelectModal';
 import { useRunAgent } from '../agents/agents-utils';
 import { AgentLogs } from '../components/AgentLogs';
 import LoadModal from '../components/LoadModal';
+import { useMiscLocalContext } from '../contexts/MixedLocalContext';
+import LoadingComponent from '../components/LoadingComponent';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const { settingsData, saveSettingsData } = useSettingsData();
+    const { createNewLog } = useMiscLocalContext();
     const [editableBlockId, setEditableBlockId] = useState(-1);
     const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number; visible: boolean }>({ mouseX: 0, mouseY: 0, visible: false });
@@ -70,7 +73,7 @@ const Story: React.FC = () => {
         }
         narrative.summaries[narrative.summaryLevel] = 'generating summary...';
         setNarrativeData({...narrativeData});
-        runAgent(agent, [{key: "body", value: text}], new AgentLogs());
+        runAgent(agent, [{key: "body", value: text}], createNewLog());
         handleSummaryClose();
       } }
     ];
@@ -298,7 +301,7 @@ const Story: React.FC = () => {
         let agent = settingsData?.agents?.find(x=>x.agentName==agentId);
         if(!agent) return;
         let narrative = targetNarrative;
-        runAgent(agent, [{key: "body", value: narrative?.getNormalizedText() || ""}], new AgentLogs());
+        runAgent(agent, [{key: "body", value: narrative?.getNormalizedText() || ""}], createNewLog());
         handleGenerateClose();
     }
 
@@ -347,6 +350,7 @@ const Story: React.FC = () => {
                 }
                 onSuccess={handleGenerate}
             />
+            <LoadingComponent />
         </div>
     );
 };

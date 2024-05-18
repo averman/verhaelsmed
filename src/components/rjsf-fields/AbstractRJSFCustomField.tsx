@@ -20,7 +20,7 @@ export default abstract class AbstractRJSFCustomField<T extends LocalFormData> e
         this.setState({ editMode: true });
     };
 
-    handleChange = (name: string, isNumber: boolean = false) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange = (name: string, isNumber: boolean = false, grouped:boolean=true) => (event: React.ChangeEvent<HTMLInputElement>) => {
         if(!event.target) return;
         const { localFormData } = this.state;
         const isCheckbox = event.target.type === 'checkbox';
@@ -28,13 +28,17 @@ export default abstract class AbstractRJSFCustomField<T extends LocalFormData> e
     
         // Handle checkbox values
         if (isCheckbox) {
-            let currentCheckboxes = this.getValueByPath(localFormData, name) || [];
-            if(event.target.checked){
-                currentCheckboxes.push(event.target.value)
+            if(grouped) {
+                let currentCheckboxes = this.getValueByPath(localFormData, name) || [];
+                if(event.target.checked){
+                    currentCheckboxes.push(event.target.value)
+                } else {
+                    currentCheckboxes = currentCheckboxes.filter((item: any) => item !== event.target.value)
+                }
+                value = [...currentCheckboxes]
             } else {
-                currentCheckboxes = currentCheckboxes.filter((item: any) => item !== event.target.value)
+                value = event.target.checked
             }
-            value = [...currentCheckboxes]
         } else if (isNumber) {
             // Handle maxTokenBudget specific logic
             value = Number.parseInt(value || '0', 10);

@@ -4,7 +4,8 @@ import {BorderedBox} from "./Deco"
 export type AgentLog = {
     id: string,
     type: "info" | "error" | "warning",
-    log: string
+    log: string,
+    title?: string
 }
 
 export class AgentLogs {
@@ -18,25 +19,30 @@ export class AgentLogs {
         }
         this.logs.push(log);
     }
-    log(logText: string, type: "info" | "error" | "warning" = "info", logId?: string){
+    log(logText: string, type: "info" | "error" | "warning" = "info", logId?: string, title?: string){
         let log = {
             id: logId || this.log.length.toString(),
             type: type,
-            log: logText
+            log: logText,
+            title
         }
         this.logs.push(log);
+        this.updateLog();
     }
-    info(logText: string, logId?: string){
-        this.log(logText, "info", logId);
+    info(logText: string, logId?: string, title?: string){
+        this.log(logText, "info", logId, title);
     }
-    error(logText: string, logId?: string){
-        this.log(logText, "error", logId);
+    error(logText: string, logId?: string, title?: string){
+        this.log(logText, "error", logId, title);
     }
-    warning(logText: string, logId?: string){
-        this.log(logText, "warning", logId);
+    warning(logText: string, logId?: string, title?: string){
+        this.log(logText, "warning", logId, title);
     }
     id: string = '';
     logs: AgentLog[] = [];
+    open: number = 0;
+    close: number = 0;
+    updateLog: ()=>void = ()=>{};
     renderLog(log: AgentLog): ReactElement {
         try{
             let obj = JSON.parse(log.log);
@@ -56,14 +62,18 @@ export class AgentLogs {
         }catch(e){
             // console.error(e);
         }
-        return <>{log.log}</>
+        return <div style={{ whiteSpace: 'pre-wrap' }}>{log.log}</div>
     }
     toJSX(): ReactElement {
         return <div>
-            {this.logs.map((log, idx) => <BorderedBox key={idx} title={`[${log.type.toUpperCase()}] ${log.id}`} collapsible>
+            {this.logs.map((log, idx) => <BorderedBox key={idx} title={`[${log.type.toUpperCase()}] ${log.id}` 
+                + (log.title?": "+log.title:"")} collapsible>
                 {this.renderLog(log)}
             </BorderedBox>)}
         </div>
+    }
+    isClosed(): boolean {
+        return this.open == 0? false: this.open == this.close;
     }
 }
 

@@ -6,6 +6,7 @@ import ShallowObjectArray from '../components/ShallowObjectArray';
 import { Agent } from '../models/SettingsDataModel';
 import AgentLogWindow, { AgentLogs } from '../components/AgentLogs';
 import { useRunAgent } from '../agents/agents-utils';
+import { useMiscLocalContext } from '../contexts/MixedLocalContext';
 
 const Sandbox: React.FC = () => {
     const { settingsData } = useSettingsData();
@@ -15,7 +16,7 @@ const Sandbox: React.FC = () => {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [activeAgent, setActiveAgent] = useState<Agent | undefined>(undefined);
     const [inputs, setInputs] = useState<any[]>([]);
-    const [logs, setLogs] = useState<AgentLogs | undefined>(undefined);
+    const { logs, setLogs, createNewLog } = useMiscLocalContext();
 
     useEffect(() => {
         setAgents(settingsData?.agents || []);
@@ -43,9 +44,8 @@ const Sandbox: React.FC = () => {
 
     const handleSubmit = async () => {
         const agent = agents[activeAgentIndex];
-        const agentLogs = new AgentLogs();
+        const agentLogs = createNewLog();
         await runAction(agent, inputs, agentLogs);
-        setLogs(agentLogs);
     }
 
     return <>
@@ -74,8 +74,10 @@ const Sandbox: React.FC = () => {
                 />
             </BorderedBox>
             <Button onClick={handleSubmit}>Submit</Button>
-            <AgentLogWindow log={logs}/>
         </>)}
+        <BorderedBox title='logs' collapsible>
+            {logs.map((log, idx) => <AgentLogWindow key={idx} log={log}/>)}
+        </BorderedBox>
     </>
 }
 

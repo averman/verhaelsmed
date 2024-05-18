@@ -165,11 +165,12 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                             onInput={handleSplit}
                             onContextMenu={e => handleContextMenu(e, ["test", "tags"], narrativeId)}
                             dangerouslySetInnerHTML={{ __html: narrative?.getNormalizedText() || '' }}
-                            style={{ whiteSpace: 'pre-wrap' }}
+                            style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}
                         ></div>
                     ) : (
                         <Typography component="div">
                             <div dangerouslySetInnerHTML={renderMarkdown(narrative?.getNormalizedText() || '')}
+                                style={{ whiteSpace: 'pre-wrap', textAlign: 'left' }}
                                 onContextMenu={e => {
                                     const contextMenus = ["tags", "delete"];
                                     if (isSelected && (narrative?.group === "")) contextMenus.push("group");

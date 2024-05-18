@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, TextField, Checkbox, FormControlLabel, Box } from '@mui/material';
+import { Button, TextField, Checkbox, FormControlLabel, Box, Switch } from '@mui/material';
 import AbstractRJSFCustomField from './AbstractRJSFCustomField'
 import { FieldProps } from '@rjsf/utils';
+import { inline } from 'marked';
 
 // Assuming these are the tags you have defined in your schema
 export const connectionsTags = ["$", "$$", "$$$", "$$$$", "$$$$$", "censored", "<15B", "15B-80B", ">80B", "instruct", "roleplay", "chat", "mixture_of_expert", "gpt", "llama2", "vicuna", "alpaca"];
@@ -45,6 +46,9 @@ class ConnectionsFieldClass extends AbstractRJSFCustomField<{ [key: string]: any
                 <TextField label="API Key" value={this.state.localFormData.connectionKey} onChange={this.handleChange('connectionKey')} margin="normal" fullWidth name="connectionKey" />
                 <TextField label="Model" value={this.state.localFormData.model} onChange={this.handleChange('model')} margin="normal" fullWidth name="model" />
                 <TextField label="Max Token Budget" type="number" value={this.state.localFormData.maxTokenBudget} onChange={this.handleChange('maxTokenBudget',true)} margin="normal" fullWidth name="maxTokenBudget" />
+                <div style={{display: 'inline'}}>
+                    Active: <Switch checked={this.state.localFormData.active} onChange={this.handleChange('active', false, false)} />
+                </div>
                 <Box>{<div>Tags:</div>}{this.renderTagCheckboxes()}</Box>
                 <Button onClick={this.handleSave} color="primary">Save</Button>
             </>

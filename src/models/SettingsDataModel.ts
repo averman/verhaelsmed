@@ -47,6 +47,7 @@ export const jsonSchema: RJSFSchema = {
     connectionName: string;
     connectionKey: string;
     tags: string[];
+    active: string[];
     maxTokenBudget: number;
     model: string;
   }

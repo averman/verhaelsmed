@@ -40,7 +40,9 @@ export function useRunAgent() {
         let evokedCount = actionEvocationCount[action.name] || 0;
 
         if(evokedCount >= maxEvokedCount) {
-            logs.info(`Action ${action.name} evoked ${evokedCount} times, with max evoked count ${maxEvokedCount} , stopping...`, `Action-${action.name}`);
+            logs.info(`Action ${action.name} evoked ${evokedCount} times, with max evoked count ${maxEvokedCount} , stopping...`, 
+                `Action-${action.name}`, "Stopping action because of max evoked count reached");
+            logs.close++;
             return;
         }
 
@@ -59,34 +61,34 @@ export function useRunAgent() {
         if(isAgentPrompt(action)){
             const connection = resolveConnection(settingsData.connections || [], action.connectionCriteria);
             if(!connection) {
-                logs.error(`No connection found for agent with criteria: ${JSON.stringify(action.connectionCriteria)}`, logid);
+                logs.error(`No connection found for agent with criteria: ${JSON.stringify(action.connectionCriteria)}`, 
+                    logid, "No connection found");
             } else {
-                logs.info("Running Prompt Action: " + action.name, logid);
+                logs.info("Running Prompt Action: " + action.name, logid, "Running Prompt Action: " + action.name);
                 let context = resolvePrompt(action.systemContext, resolvedInputs, variables);
-                logs.info(context, logid);
+                logs.info(context, logid, "context");
                 let instruction = resolvePrompt(action.instruction, resolvedInputs, variables);
-                logs.info(instruction, logid);
+                logs.info(instruction, logid, "instruction");
                 response = await queryToLLM(context, instruction, connection, logs);
             }
         } else if (isAgentScript(action)){
-            logs.info("Running Script Action: " + action.name, logid);
+            logs.info("Running Script Action: " + action.name, logid, "Running Script Action: " + action.name);
             try{
                 let script: string = resolveScript(action.script, resolvedInputs);
-                logs.info(script, logid);
+                logs.info(script, logid, "the script");
                 response = eval(script);
             } catch(e) {
                 logs.error((e as any).toString(), logid);
             }
         } else if (isAgentNativeAction(action)) {
-            logs.info("Running Native Action: " + action.name, logid);
+            logs.info("Running Native Action: " + action.name, logid, "Running Native Action: " + action.name);
             let parameters: string[] = action.parameters.map(param => {
                 return resolveParam(param.parameter, resolvedInputs, variables);
             });
-            let nativeAction = action.nativeAction;
             if(nativeFunctions[action.nativeAction]) {
                 response = nativeFunctions[action.nativeAction](parameters);
             } else {
-                logs.error(`Native function ${action.nativeAction} not found`, logid);
+                logs.error(`Native function ${action.nativeAction} not found`, logid, "native function not found");
             }
         }
 
@@ -97,34 +99,40 @@ export function useRunAgent() {
             saveSettingsData(settingsData)
         }
 
-        logs.info(response, logid);
+        logs.info(response, logid, "response");
 
         if(action.targets.length>0) {
             let nextTargets = action.targets.map(target => (response.indexOf(target.targetName) > -1)?target:undefined).filter(x=>x)
             if(nextTargets.length>0) {
-                logs.info(`Found targets: ${nextTargets.map(x=>x?.targetName).join(', ')}`, logid);
                 for(let target of nextTargets) {
                     if(target?.targetName == 'end') {
-                        logs.info(`Found end target, stopping actions`, logid);
+                        logs.info(`Found end target, stopping actions`, logid, "stopping actions because end reached");
+                        logs.close++;
                         return;
                     }
                     let targetedAction = agent.agentActions.find(action => action.name === target?.targetName);
                     console.log(agent.agentActions, target?.targetName, targetedAction)
-                    logs.info(`Targeted action: ${targetedAction?.name}`, logid);
                     if(targetedAction) {
-                        logs.info(`Running targeted action: ${targetedAction.name}`, logid);
+                        logs.info(`Running targeted action: ${targetedAction.name}`, logid, `Running targeted action: ${targetedAction.name}`);
                         return await runAction({actionName: targetedAction.name}, agent, inputs, logs);
+                    } else {
+                        logs.error(`No action found for target ${target?.targetName}. Stopping actions`, logid, 
+                            `No action found for target ${target?.targetName}`);
+                        logs.close++;
+                        return;
                     }
                 }
             } else {
-                logs.info(`No targets found, stopping actions`, logid);
+                logs.info(`No targets found, stopping actions`, logid, "No targets found, stopping actions");
+                logs.close++;
                 return;
             }
         } else if (typeof actionIndex !== 'undefined' && actionIndex < agent.agentActions.length-1) {
-            logs.info(`Continuing to next action`, logid);
+            logs.info(`No targets specified, Continuing to next action`, logid, `Continuing to next action`);
             return runAction({actionIndex: actionIndex+1}, agent, inputs, logs);
         } else {
-            logs.info(`No more actions to run, finishing...`, logid);
+            logs.info(`No more actions to run, finishing...`, logid, `end of actions`);
+            logs.close++;
             return;
         }
 
@@ -132,12 +140,13 @@ export function useRunAgent() {
 
     return async(agent: Agent, inputs: AgentInput[], logs: AgentLogs) => {
         setActionEvocationCount({});
+        logs.open++;
         return await runAction({actionIndex: 0}, agent, inputs, logs);
     }
 }
 
 function resolveConnection(connections: Connection[], agentConnectionCriteria: AgentConnectionCriteria): Connection | undefined {
-    let filteredConnections = connections.filter(connection => {
+    let filteredConnections = connections.filter(x=>x.active).filter(connection => {
         let isPassing: boolean = true;
         if(agentConnectionCriteria.mandatoryTag) {
             isPassing = agentConnectionCriteria.mandatoryTag.every(tag => connection.tags.includes(tag));
