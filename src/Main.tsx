@@ -19,12 +19,14 @@ const Main: React.FC = () => {
 
   function taborder(name: string): number {
     switch (name) {
-      case 'story':
-        return 101;
       case 'setting':
         return 100;
-      case 'sandbox':
+      case 'story':
+        return 101;
+      case 'lore':
         return 102;
+      case 'sandbox':
+        return 1000;
       default:
         return 0;
     }

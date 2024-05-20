@@ -17,7 +17,6 @@ const uiSchema: UiSchema = {
     "ui:readonly": true,
   },
   projectName: {
-    "ui:autofocus": true,
     "ui:emptyValue": "",
   },
   projectDescription: {
