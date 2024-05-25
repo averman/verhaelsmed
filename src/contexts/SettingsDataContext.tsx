@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { ProjectSettings } from '../models/SettingsDataModel';
 import { db, FormState } from '../utils/IndexedDbUtils';
+import { randomString } from '../utils/Random';
 
 interface ProjectItem {
   name: string;
@@ -13,6 +14,7 @@ interface SettingsDataState {
   setSettingsData: (data: ProjectSettings) => void;
   loadSettingsData: (id: string) => Promise<void>;
   saveSettingsData: (data: ProjectSettings) => Promise<void>;
+  deleteSettingsData: (id: string) => Promise<void>;
   items: ProjectItem[];
   loadItems: () => Promise<void>;
 }
@@ -36,6 +38,12 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
     await loadItems(); // Reload items after saving data
   }, []);
 
+  const deleteSettingsData = useCallback(async (id: string) => {
+    await db.formState.delete(id);
+    setSettingsData({ projectId: randomString(8) } as ProjectSettings);
+    loadItems(); // Reload items after deleting data
+  }, []);
+
   useEffect(() => {
      db.safePut({ id: 'settings', data: settingsData, lastUpdatedTime: Date.now() });
   }, [settingsData]);
@@ -55,7 +63,7 @@ export const SettingsDataProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, [loadSettingsData, loadItems]);
 
   return (
-    <SettingsDataContext.Provider value={{ settingsData, setSettingsData, loadSettingsData, saveSettingsData, items, loadItems }}>
+    <SettingsDataContext.Provider value={{ settingsData, setSettingsData, loadSettingsData, saveSettingsData, deleteSettingsData, items, loadItems }}>
       {children}
     </SettingsDataContext.Provider>
   );
