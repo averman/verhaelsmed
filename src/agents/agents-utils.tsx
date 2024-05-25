@@ -148,10 +148,10 @@ export function useRunAgent() {
 function resolveConnection(connections: Connection[], agentConnectionCriteria: AgentConnectionCriteria): Connection | undefined {
     let filteredConnections = connections.filter(x=>x.active).filter(connection => {
         let isPassing: boolean = true;
-        if(agentConnectionCriteria.mandatoryTag) {
+        if(agentConnectionCriteria.mandatoryTag?.length) {
             isPassing = agentConnectionCriteria.mandatoryTag.every(tag => connection.tags.includes(tag));
         }
-        if(agentConnectionCriteria.negativeMandatoryTag) {
+        if(agentConnectionCriteria.negativeMandatoryTag?.length) {
             isPassing = isPassing && !agentConnectionCriteria.negativeMandatoryTag.some(tag => connection.tags.includes(tag));
         }
         return isPassing;
@@ -183,31 +183,75 @@ function resolvePrompt(initialPrompt: string, inputs: { key: string, value: stri
 }
 
 async function queryToLLM(context: string, instruction: string, connection: Connection, logs: AgentLogs): Promise<string> {
-    try{
-        let response = await fetch(connection.connectionHost, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${connection.connectionKey}`,
-                "HTTP-Referer": `https://github.com/averman/verhaelsmed`, // Optional, for including your app on openrouter.ai rankings.
-                "X-Title": `Verhaelsmed`, // Optional. Shows in rankings on openrouter.ai.
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "model": connection.model,
-                "messages": [
-                    { "role": "system", "content": context },
-                    { "role": "user", "content": instruction}
-                ],
-            })
-        });
-        let responseJson = await response.json();
-        return responseJson.choices[0]?.message?.content?.toString();
-    } catch(e){
-        if(e instanceof Error) {
-            logs.error(e.stack || e.message);
-        } else logs.error((e as any).toString());
+    let response = await fetch(connection.connectionHost, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${connection.connectionKey}`,
+            "HTTP-Referer": `https://github.com/averman/verhaelsmed`, // Optional, for including your app on openrouter.ai rankings.
+            "X-Title": `Verhaelsmed`, // Optional. Shows in rankings on openrouter.ai.
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "model": connection.model,
+            "messages": [
+                { "role": "system", "content": context },
+                { "role": "user", "content": instruction}
+            ],
+        })
+    }).catch((reason)=>{
+        console.error("rejected",reason);
+    });
+
+    let responseJson = await response?.json();
+
+    if (!responseJson.choices) {
+        if(responseJson.error) {
+            if(responseJson.error.message.includes("'Conversation roles must alternate user/assistant")) {
+                let response = await fetch(connection.connectionHost, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${connection.connectionKey}`,
+                        "HTTP-Referer": `https://github.com/averman/verhaelsmed`, // Optional, for including your app on openrouter.ai rankings.
+                        "X-Title": `Verhaelsmed`, // Optional. Shows in rankings on openrouter.ai.
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": connection.model,
+                        "messages": [
+                            { "role": "user", "content": context },
+                            { "role": "assistant", "content": "I understand, and your instruction?" },
+                            { "role": "user", "content": instruction}
+                        ]
+                    })
+                }).catch((reason)=>{
+                    console.error("rejected",reason);
+                });
+
+                if(!response) throw new Error("No response from LLM");
+
+                let streamedResponse = await handleStreamedResponse(response);
+                return streamedResponse;
+            }
+        }
     }
-    return "";
+
+    return responseJson.choices[0]?.message?.content?.toString();
+}
+
+async function handleStreamedResponse(response: Response) {
+    const reader = response.body?.getReader();
+    if(!reader) throw new Error("No reader found in response");
+    const decoder = new TextDecoder("utf-8");
+    let result = "";
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += decoder.decode(value);
+    }
+
+    // Parsing the streamed result to extract the content
+    const resultJson = JSON.parse(result);
+    return resultJson.choices[0]?.message?.content?.toString();
 }
 
 function resolveScript(script: string, resolvedInputs: { key: string; value: string; }[]): string {
