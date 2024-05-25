@@ -1,18 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { Box, IconButton, TextField, Button, Select, MenuItem, FormControl, InputLabel, Card, CardContent, CardActions, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Narrative from '../core/Narrative';
 import {db} from '../utils/IndexedDbUtils';
-
-interface FilterCriteria {
-    id: string; // Unique identifier for each filter
-    type: 'show' | 'hide';
-    criteria: 'all' | 'has tag' | 'not have tag' | 'has tag value';
-    tag: string;
-    value: string;
-}
+import { FilterCriteria, filterNarratives } from '../agents/filter-utils';
 
 export interface NarrativeItemsProps {
     narrativeId: string;
@@ -22,6 +15,8 @@ export interface NarrativeItemsProps {
     handleEditorSelect: (id: string) => void;
     isSelected: boolean;
 }
+
+export type handleOnClick = (e: React.MouseEvent, id: string) => ReactElement;
 
 interface SidebarFilterProps {
     projectId: string;
@@ -60,7 +55,7 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
             setFiltersLoaded(true);
         };
         loadFilters();
-    }, []);
+    }, [projectId]);
 
     const handleAddFilter = () => {
         const newFilter: FilterCriteria = {
@@ -116,32 +111,10 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
     };
 
     const sortedNarratives = narratives.sort((a, b) => a.timeline - b.timeline);
-    let filteredNarratives = sortedNarratives.filter(narrative => {
-        for(let i = filters.length - 1; i >= 0; i--) {
-            const filter = filters[i];
-            if (filter.criteria === 'all') return filter.type === 'show';
-            if (filter.criteria === 'has tag') {
-                if (narrative.tags[filter.tag]) return filter.type === 'show';
-            }
-            if (filter.criteria === 'has tag value') {
-                if (narrative.tags[filter.tag] && narrative.tags[filter.tag].includes(filter.value)) return filter.type === 'show';
-            }
-        }
-    });
-    // filter out all the group that is not visible
-    filteredNarratives = filteredNarratives.filter(narrative => !(narrative.isAGroup) || narrative.groupVisibility);
-    // find all groups that is visible
-    const visibleGroups = filteredNarratives.filter(narrative => narrative.isAGroup && narrative.groupVisibility);
-    // filter out all the group child recursively
-    filteredNarratives = filteredNarratives.filter(narrative => {
-        for(let group of visibleGroups) {
-            if(narrative.hasTag("group",group.id) && narrative.id != group.id) return false;
-        }
-        return true;
-    });
+    let filteredNarratives = filterNarratives(sortedNarratives, filters);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh', padding: '20px' }}>
             {sidebarVisible && (
                 <Box sx={{ width: 300, borderRight: '1px solid #ccc', padding: 2 }}>
                     {filters.map((filter, index) => (
@@ -175,6 +148,8 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
                     />
                 ))}
             </Box>
+                <Box sx={{ width: 300, borderRight: '1px solid #ccc', padding: 2 }}>
+                </Box>
             <IconButton
                 aria-label="toggle sidebar"
                 onClick={handleToggleSidebar}

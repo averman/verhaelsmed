@@ -86,7 +86,7 @@ export function useRunAgent() {
                 return resolveParam(param.parameter, resolvedInputs, variables);
             });
             if(nativeFunctions[action.nativeAction]) {
-                response = nativeFunctions[action.nativeAction](parameters);
+                response = await nativeFunctions[action.nativeAction](parameters);
             } else {
                 logs.error(`Native function ${action.nativeAction} not found`, logid, "native function not found");
             }
