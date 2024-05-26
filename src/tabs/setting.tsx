@@ -196,7 +196,13 @@ const Settings: React.FC = () => {
           Export
         </Button>
       </BorderedBox>
-      <LoadModal open={open} onClose={() => { setOpen(false) }} items={items} onSuccess={handleLoad} />
+      <LoadModal 
+        open={open} 
+        onClose={() => { setOpen(false) }} 
+        items={items} 
+        onSuccess={handleLoad} 
+        selectionTitle='Select a project'
+      />
     </>
   );
 };

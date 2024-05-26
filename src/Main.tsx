@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs, Tab, styled } from '@mui/material';
+import { Tabs, Tab, styled, Box } from '@mui/material';
 import * as TabComponents from './tabs';
 
 const EditorContainer = styled('div')(({ theme }) => ({
@@ -36,21 +36,23 @@ const Main: React.FC = () => {
   tabs.sort((a, b) => taborder(a) - taborder(b));
 
   return (
-    <EditorContainer>
-      <Tabs value={value} onChange={handleChange}>
+    <Box sx={{height: '96vh'}}>
+      <Tabs value={value} onChange={handleChange} sx={{height: '6vh'}}>
         {tabs.map((tab, index) => (
           <Tab key={index} label={tab} />
         ))}
       </Tabs>
-      {tabs.map((tabName, index) => {
-        const TabComponent = TabComponents[tabName as keyof typeof TabComponents];
-        return (
-          <div key={index} hidden={value !== index}>
-            {value === index && <TabComponent />}
-          </div>
-        );
-      })}
-    </EditorContainer>
+      <Box sx={{height: '90vh', width: '96vw'}}>
+        {tabs.map((tabName, index) => {
+          const TabComponent = TabComponents[tabName as keyof typeof TabComponents];
+          return (
+            <div key={index} hidden={value !== index}>
+              {value === index && <TabComponent />}
+            </div>
+          );
+        })}
+      </Box>
+    </Box>
   );
 };
 

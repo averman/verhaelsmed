@@ -123,11 +123,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
     }
 
     return (
-        <Card onDoubleClick={handleDoubleClick} style={{
-            backgroundColor: isSelected ? '#f0f0f0' : '',
-            border: '1px solid #eeeeee', // Adjust the color and width as needed
-            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)' // Optional: Add a subtle shadow for depth
-        }} onClick={(e) => {
+        <Card onDoubleClick={handleDoubleClick} sx={{margin: 2, marginBottom: 3}} onClick={(e) => {
             if (e.ctrlKey || e.metaKey) { // Check for Ctrl or Cmd key
                 e.stopPropagation(); // Prevent event from reaching the document
                 handleEditorSelect(narrativeId);

@@ -9,9 +9,10 @@ interface ObjectArrayProps<T> {
     itemRenderer: (item: T, handleChange: (newItem: T) => void)=>ReactElement;
     newItemDefaultValue: T;
     onChange: (event: { target: { name: string; value: any[]; }; }) => void;
+    children?: ReactElement[];
 }
 
-function ObjectArray<T>({ title, value, itemRenderer, newItemDefaultValue, onChange }: ObjectArrayProps<T>): ReactElement {
+function ObjectArray<T>({ title, value, itemRenderer, newItemDefaultValue, onChange, children }: ObjectArrayProps<T>): ReactElement {
     const [items, setItems] = useState<T[]>(value || []);
 
     const handleAddItem = () => {
@@ -60,7 +61,7 @@ function ObjectArray<T>({ title, value, itemRenderer, newItemDefaultValue, onCha
                 {title}
             </Typography>
             {items.map((item, index) => (
-                <Box key={index} alignItems="center" marginBottom={1}>
+                <Box key={index} alignItems="center" marginBottom={1} display="flex">
                     {itemRenderer(item, (newItem) => handleItemChange(index, items, newItem))}
                     <IconButton onClick={() => handleRemoveItem(index)} color="error">
                         <RemoveCircleOutline />
@@ -68,6 +69,7 @@ function ObjectArray<T>({ title, value, itemRenderer, newItemDefaultValue, onCha
                 </Box>
             ))}
             <Button onClick={handleAddItem} color="primary">Add</Button>
+            {children}
         </Box>
     );
 }

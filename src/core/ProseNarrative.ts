@@ -19,11 +19,10 @@ export default class ProseNarrative extends Narrative  {
     }
     summaries: string[] = [];
     
-    constructor(id: string, timeline: number, text: string, blockType?: string) {
+    constructor(id: string, timeline: number) {
         super();
         this.id = id;
         this.timeline = timeline;
-        this.text = text;
         this.addSerializer("default", defaultSerializer);
     }
 
@@ -39,7 +38,7 @@ export default class ProseNarrative extends Narrative  {
 narrativeFactory.register(
     "prose", 
     (id: string, timeline: number, text: string, format: string='default') => {
-        let res = new ProseNarrative(id, timeline, '')
+        let res = new ProseNarrative(id, timeline)
         if(format == 'default') res.deserialize('default', text);
         else if (format == 'fromText') res.setNormalizedText(text);
         else throw `[ProseNarrative] ERROR: unknown Factory Format: ${format}`
@@ -82,7 +81,7 @@ function narrativeOnChange (narrative: Narrative, dict: NarrativeDict) {
         } else {
             newTimeline = a + (i+1)*((b - a)/(parts.length+2))
         }
-        let newNarrative = new ProseNarrative(newId, newTimeline, '');
+        let newNarrative = new ProseNarrative(newId, newTimeline);
         deepCopy(newNarrative, narrative as ProseNarrative);
 
         newNarrative.timeline = newTimeline;

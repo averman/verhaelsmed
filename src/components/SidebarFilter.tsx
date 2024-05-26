@@ -16,8 +16,6 @@ export interface NarrativeItemsProps {
     isSelected: boolean;
 }
 
-export type handleOnClick = (e: React.MouseEvent, id: string) => ReactElement;
-
 interface SidebarFilterProps {
     projectId: string;
     narratives: Narrative[];
@@ -28,6 +26,8 @@ interface SidebarFilterProps {
     handleEditorSelect: (id: string) => void;
     isSelected: (id: string) => boolean;
     component: React.ComponentType<NarrativeItemsProps>;
+    filterId: string;
+    rightBarComponent?: ReactElement;
 }
 
 
@@ -35,7 +35,7 @@ interface SidebarFilterProps {
 const defaultSpecialFilter: FilterCriteria = { id: 'special', type: 'show', criteria: 'all', tag: '', value: '' };
 
 function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, handleContextMenu,
-    handleEditorSelect, isSelected, component: ChildComponent }: SidebarFilterProps) {
+    handleEditorSelect, isSelected, filterId, rightBarComponent, component: ChildComponent }: SidebarFilterProps) {
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [filters, setFilters] = useState<FilterCriteria[]>([defaultSpecialFilter]);
     const [filtersLoaded, setFiltersLoaded] = useState<boolean>(false);
@@ -114,9 +114,9 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
     let filteredNarratives = filterNarratives(sortedNarratives, filters);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh', padding: '20px' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
             {sidebarVisible && (
-                <Box sx={{ width: 300, borderRight: '1px solid #ccc', padding: 2 }}>
+                <Box sx={{ width: 300, borderRight: '1px solid #ccc', overflow: 'auto', height: '90vh' }}>
                     {filters.map((filter, index) => (
                         <Card key={index} sx={{ marginBottom: 2 }}>
                             <CardContent>
@@ -136,7 +136,7 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
                     </Button>
                 </Box>
             )}
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
+            <Box sx={{ flex: 1, overflow: 'auto', height: '90vh', backgroundColor: '#f7f7f7' }}>
                 {filteredNarratives.map((narrative, i) => (
                     <ChildComponent key={narrative.id}
                         narrativeId={narrative.id}
@@ -148,12 +148,13 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
                     />
                 ))}
             </Box>
-                <Box sx={{ width: 300, borderRight: '1px solid #ccc', padding: 2 }}>
+                <Box sx={{ width: 300, borderRight: '1px solid #ccc', overflow: 'auto', height: '90vh' }}>
+                    {rightBarComponent}
                 </Box>
             <IconButton
                 aria-label="toggle sidebar"
                 onClick={handleToggleSidebar}
-                sx={{ position: 'absolute', left: sidebarVisible ? 300 : 0, top: '5%' }}
+                sx={{ position: 'absolute', left: sidebarVisible ? 270 : -30, top: '5%' }}
             >
                 <MenuIcon />
             </IconButton>

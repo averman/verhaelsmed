@@ -22,6 +22,7 @@ export function filterNarratives(narratives: Narrative[], filters: FilterCriteri
                     return filter.type === 'show';
             }
         }
+        return true;
     });
     // filter out all the group that is not visible
     filteredNarratives = filteredNarratives.filter(narrative => !(narrative.isAGroup) || narrative.groupVisibility);

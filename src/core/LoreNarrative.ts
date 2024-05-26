@@ -1,32 +1,38 @@
 import { validateScript } from "../agents/script-utils";
-import Narrative from "./Narrative";
+import Narrative, { defaultSerializer } from "./Narrative";
 import narrativeFactory from "./NarrativeFactory";
+import LoreTypes from "../hardcoded-settings/LoreTypes";
 
 class LoreNarrative extends Narrative {
     narrativeType: string = "lore";
-    private text: string = "";
     loreType: string = "story";
     loreId: string = "";
     rawCondition: string = "true";
+    items: {[key: string]: string} = {};
     condition: (inputs: any) => boolean = (inputs: any) => true;
-    setNormalizedText(text: string): void {
-        if(this.summaryLevel == -1) this.text = text;
-        else this.summaries[this.summaryLevel] = text;
-    }
-    getNormalizedText(): string { 
-        while((typeof this.summaries[this.summaryLevel] == 'undefined') && this.summaryLevel >= 0){
-            this.summaryLevel--;
+    getNormalizedText(targetTokenCount?: number): string { 
+        if(this.loreType in LoreTypes) {
+            return LoreTypes[this.loreType].keys.filter(x=>x && x!='')
+                .map(key => `${key}: ${this.items[key]}`).join("\n");
         }
-        if(this.summaryLevel >= 0) return this.summaries[this.summaryLevel];
-        return this.text 
+        return Object.keys(this.items).map(key => `${key}: ${this.items[key]}`).join("\n");
     }
     summaries: string[] = [];
     
-    constructor(id: string, timeline: number, text: string) {
+    constructor(id: string, timeline: number, loreType: string) {
         super();
         this.id = id;
         this.timeline = timeline;
-        this.text = text;
+        this.loreType = loreType;
+
+        if(loreType in LoreTypes) {
+            let keys: string[] = LoreTypes[loreType].keys;
+            for(let key of keys) {
+                this.items[key] = "";
+            }
+        }
+
+        this.addSerializer("default", defaultSerializer);
     }
 
     haveSummary(): boolean {

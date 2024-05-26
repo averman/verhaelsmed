@@ -45,7 +45,10 @@ export const NarrativeDataProvider: React.FC<SettingsDataProviderProps> = ({ chi
       })
     });
     
-
+    if(!settingsData.projectId) {
+      alert('no project loaded yet');
+      return;
+    }
     await db.narrative.where('projectId').equals(settingsData.projectId).delete();
     await db.narrative.bulkAdd(narrativeRaws);
   }, [settingsData]);
