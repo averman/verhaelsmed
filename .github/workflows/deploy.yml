@@ -39,4 +39,4 @@ jobs:
 
     - name: Deploy to S3
       run: |
-        aws s3 sync build/ s3://static.averism.com/verhaelsmed/ --delete
+        aws s3 sync build/ s3://static.averism.com/verhaelsmed/ --delete --acl public-read
