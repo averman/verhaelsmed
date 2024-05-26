@@ -29,6 +29,7 @@ jobs:
       run: |
         echo "${{ secrets.AWS_SECRET_B64 }}" | base64 --decode > aws_secret_key.txt
         aws_secret_key=$(cat aws_secret_key.txt)
+        echo "::set-output name=aws_secret_key::${aws_secret_key}"
 
     - name: Configure AWS CLI
       run: |
