@@ -17,7 +17,6 @@ const uiSchema: UiSchema = {
     "ui:readonly": true,
   },
   projectName: {
-    "ui:autofocus": true,
     "ui:emptyValue": "",
   },
   projectDescription: {
@@ -40,7 +39,7 @@ const uiSchema: UiSchema = {
 const Settings: React.FC = () => {
   const [formData, setFormData] = useState<any>({});
   const [open, setOpen] = useState(false);
-  const { saveSettingsData, settingsData, items, loadSettingsData } = useSettingsData();
+  const { saveSettingsData, deleteSettingsData, settingsData, items, loadSettingsData } = useSettingsData();
 
   // Use settingsData from context as the initial form data
   React.useEffect(() => {
@@ -59,6 +58,12 @@ const Settings: React.FC = () => {
 
   const handleReset = () => {
     setFormData({ projectId: randomString(8) });
+    // Optionally, reset to initial state or clear specific settings
+  };
+
+  const handleDelete = () => {
+    let currentProjectId = formData.projectId;
+    deleteSettingsData(currentProjectId);
     // Optionally, reset to initial state or clear specific settings
   };
 
@@ -177,7 +182,10 @@ const Settings: React.FC = () => {
           Load
         </Button>
         <Button variant="contained" color="error" onClick={handleReset} style={{ margin: 10 }}>
-          Reset
+          Create New
+        </Button>
+        <Button variant="contained" color="error" onClick={handleDelete} style={{ margin: 10 }}>
+          Delete
         </Button>
       </Form>
       <BorderedBox title='Extra actions' collapsible>
@@ -188,7 +196,13 @@ const Settings: React.FC = () => {
           Export
         </Button>
       </BorderedBox>
-      <LoadModal open={open} onClose={() => { setOpen(false) }} items={items} onSuccess={handleLoad} />
+      <LoadModal 
+        open={open} 
+        onClose={() => { setOpen(false) }} 
+        items={items} 
+        onSuccess={handleLoad} 
+        selectionTitle='Select a project'
+      />
     </>
   );
 };

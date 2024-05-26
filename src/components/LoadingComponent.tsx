@@ -9,7 +9,6 @@ const LoadingComponent: React.FC = () => {
   useEffect(() => {
     const currentLog = getCurrentLog();
     if (currentLog) {
-      console.log("setting is loading", !currentLog.isClosed(), currentLog);
       setIsLoading(!currentLog.isClosed());
     } else {
       setIsLoading(false);

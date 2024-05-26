@@ -82,7 +82,7 @@ const Story: React.FC = () => {
     useEffect(() => {
         // Automatically add a blank ProseNarrative if none exist
         if (!narrativeData['prose'] || Object.keys(narrativeData['prose']).length === 0) {
-            const blankNarrative = new ProseNarrative('initial',1,'');
+            const blankNarrative = new ProseNarrative('initial',1);
             setNarrativeData({
                 ...narrativeData,
                 'prose': { [blankNarrative.id]: blankNarrative },
@@ -318,6 +318,7 @@ const Story: React.FC = () => {
                 handleEditorSelect={handleEditorSelect} 
                 isSelected={(id)=>selectedEditors.includes(id)}
                 component={ProseEditor}
+                filterId='filters'
             />
             <ContextMenu
                 mouseX={contextMenu.mouseX}
@@ -349,6 +350,7 @@ const Story: React.FC = () => {
                     || []
                 }
                 onSuccess={handleGenerate}
+                selectionTitle='Select a generator agent'
             />
             <LoadingComponent />
         </div>

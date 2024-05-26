@@ -6,9 +6,10 @@ interface FileModalProps {
   onClose: () => void;
   items: {name: string, id: string, description: string}[];
   onSuccess: (id: string) => void;
+  selectionTitle?: string;
 }
 
-const LoadModal: React.FC<FileModalProps> = ({ open, onClose, items, onSuccess }) => {
+const LoadModal: React.FC<FileModalProps> = ({ open, onClose, items, onSuccess, selectionTitle }) => {
   const [selectedId, setSelectedId] = useState<string>("");
 
   const handleFileSelect = (id: string) => {
@@ -30,7 +31,7 @@ const LoadModal: React.FC<FileModalProps> = ({ open, onClose, items, onSuccess }
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <Typography variant="h6" gutterBottom>
-              Saved Files
+              {selectionTitle || 'Select an item'}
             </Typography>
             <List>
               {items.map((item) => (

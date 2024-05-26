@@ -44,9 +44,6 @@ function validateScript(script: string): void {
             throw new Error(`Script validation error: Client-side storage access attempt detected with pattern ${pattern}.`);
         }
     });
-
-    // If all checks pass
-    console.log("Script is safe.");
 }
 
 export { validateScript}

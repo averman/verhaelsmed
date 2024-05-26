@@ -1,18 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { Box, IconButton, TextField, Button, Select, MenuItem, FormControl, InputLabel, Card, CardContent, CardActions, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Narrative from '../core/Narrative';
 import {db} from '../utils/IndexedDbUtils';
-
-interface FilterCriteria {
-    id: string; // Unique identifier for each filter
-    type: 'show' | 'hide';
-    criteria: 'all' | 'has tag' | 'not have tag' | 'has tag value';
-    tag: string;
-    value: string;
-}
+import { FilterCriteria, filterNarratives } from '../agents/filter-utils';
 
 export interface NarrativeItemsProps {
     narrativeId: string;
@@ -33,6 +26,8 @@ interface SidebarFilterProps {
     handleEditorSelect: (id: string) => void;
     isSelected: (id: string) => boolean;
     component: React.ComponentType<NarrativeItemsProps>;
+    filterId: string;
+    rightBarComponent?: ReactElement;
 }
 
 
@@ -40,7 +35,7 @@ interface SidebarFilterProps {
 const defaultSpecialFilter: FilterCriteria = { id: 'special', type: 'show', criteria: 'all', tag: '', value: '' };
 
 function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, handleContextMenu,
-    handleEditorSelect, isSelected, component: ChildComponent }: SidebarFilterProps) {
+    handleEditorSelect, isSelected, filterId, rightBarComponent, component: ChildComponent }: SidebarFilterProps) {
     const [sidebarVisible, setSidebarVisible] = useState<boolean>(true);
     const [filters, setFilters] = useState<FilterCriteria[]>([defaultSpecialFilter]);
     const [filtersLoaded, setFiltersLoaded] = useState<boolean>(false);
@@ -60,7 +55,7 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
             setFiltersLoaded(true);
         };
         loadFilters();
-    }, []);
+    }, [projectId]);
 
     const handleAddFilter = () => {
         const newFilter: FilterCriteria = {
@@ -116,34 +111,12 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
     };
 
     const sortedNarratives = narratives.sort((a, b) => a.timeline - b.timeline);
-    let filteredNarratives = sortedNarratives.filter(narrative => {
-        for(let i = filters.length - 1; i >= 0; i--) {
-            const filter = filters[i];
-            if (filter.criteria === 'all') return filter.type === 'show';
-            if (filter.criteria === 'has tag') {
-                if (narrative.tags[filter.tag]) return filter.type === 'show';
-            }
-            if (filter.criteria === 'has tag value') {
-                if (narrative.tags[filter.tag] && narrative.tags[filter.tag].includes(filter.value)) return filter.type === 'show';
-            }
-        }
-    });
-    // filter out all the group that is not visible
-    filteredNarratives = filteredNarratives.filter(narrative => !(narrative.isAGroup) || narrative.groupVisibility);
-    // find all groups that is visible
-    const visibleGroups = filteredNarratives.filter(narrative => narrative.isAGroup && narrative.groupVisibility);
-    // filter out all the group child recursively
-    filteredNarratives = filteredNarratives.filter(narrative => {
-        for(let group of visibleGroups) {
-            if(narrative.hasTag("group",group.id) && narrative.id != group.id) return false;
-        }
-        return true;
-    });
+    let filteredNarratives = filterNarratives(sortedNarratives, filters);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
             {sidebarVisible && (
-                <Box sx={{ width: 300, borderRight: '1px solid #ccc', padding: 2 }}>
+                <Box sx={{ width: 300, borderRight: '1px solid #ccc', overflow: 'auto', height: '90vh' }}>
                     {filters.map((filter, index) => (
                         <Card key={index} sx={{ marginBottom: 2 }}>
                             <CardContent>
@@ -163,7 +136,7 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
                     </Button>
                 </Box>
             )}
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
+            <Box sx={{ flex: 1, overflow: 'auto', height: '90vh', backgroundColor: '#f7f7f7' }}>
                 {filteredNarratives.map((narrative, i) => (
                     <ChildComponent key={narrative.id}
                         narrativeId={narrative.id}
@@ -175,10 +148,13 @@ function SidebarFilter({ projectId, narratives, switchEditing, editableBlockId, 
                     />
                 ))}
             </Box>
+                <Box sx={{ width: 300, borderRight: '1px solid #ccc', overflow: 'auto', height: '90vh' }}>
+                    {rightBarComponent}
+                </Box>
             <IconButton
                 aria-label="toggle sidebar"
                 onClick={handleToggleSidebar}
-                sx={{ position: 'absolute', left: sidebarVisible ? 300 : 0, top: '5%' }}
+                sx={{ position: 'absolute', left: sidebarVisible ? 270 : -30, top: '5%' }}
             >
                 <MenuIcon />
             </IconButton>
