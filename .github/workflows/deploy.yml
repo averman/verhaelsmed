@@ -1,0 +1,41 @@
+name: Build and Deploy to S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build the project
+      run: npm run build
+
+    - name: Decode AWS secret key
+      id: decode-secret
+      run: |
+        echo "${{ secrets.AWS_SECRET_B64 }}" | base64 --decode > aws_secret_key.txt
+        aws_secret_key=$(cat aws_secret_key.txt)
+
+    - name: Configure AWS CLI
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY }}
+        aws configure set aws_secret_access_key ${{ steps.decode-secret.outputs.aws_secret_key }}
+        aws configure set default.region us-east-1
+
+    - name: Deploy to S3
+      run: |
+        aws s3 sync build/ s3://static.averism.com/verhaelsmed/ --delete
