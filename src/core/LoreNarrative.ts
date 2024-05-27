@@ -9,7 +9,7 @@ class LoreNarrative extends Narrative {
     loreId: string = "";
     rawCondition: string = "true";
     items: {[key: string]: string} = {};
-    condition: (inputs: any) => boolean = (inputs: any) => true;
+    condition: (inputs: any) => string[] = (inputs: any) => [];
     getNormalizedText(targetTokenCount?: number): string { 
         if(this.loreType in LoreTypes) {
             return LoreTypes[this.loreType].keys.filter(x=>x && x!='')
@@ -50,7 +50,7 @@ narrativeFactory.register("lore", (id: string, timeline: number, text: string, f
         res.deserialize('default', text);
         if(res.rawCondition){
             validateScript(res.rawCondition);
-            res.condition = new Function('inputs', res.rawCondition) as (inputs: any) => boolean;
+            res.condition = new Function('inputs', res.rawCondition) as (inputs: any) => [];
         }
     }
     else throw `[LoreNarrative] ERROR: unknown Factory Format: ${format}`

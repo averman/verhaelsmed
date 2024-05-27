@@ -15,11 +15,13 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
         const { narrativeData, setNarrativeData } = useNarrativeData();
         // const loreNarrative:LoreNarrative = narrativeData["lore"][narrativeId] as LoreNarrative;
         const [loreNarrative, setLoreNarrative] = useState<LoreNarrative | undefined>(undefined);
+        const [loreTimeline, setLoreTimeline] = useState<number | string | undefined>(undefined);
 
         useEffect(() => {
             if (narrativeData && narrativeData["lore"]) {
                 let narrative = narrativeData["lore"][narrativeId];
                 setLoreNarrative(narrative as LoreNarrative);
+                if(narrative) setLoreTimeline(narrative.timeline);
             }
         }, [narrativeData]);
 
@@ -74,21 +76,32 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
         }
 
         if(loreNarrative){
+            let title = loreNarrative.loreId;
+            if(loreNarrative.loreType in LoreTypes && LoreTypes[loreNarrative.loreType].idFrom)
+                title = loreNarrative.items[LoreTypes[loreNarrative.loreType].idFrom || title];
             return <BorderedBox collapsible 
-                title={`[${loreNarrative.loreType}] ${loreNarrative.loreId}  @[${loreNarrative.timeline}]`} 
-                onContextMenu={e => handleContextMenu(e, ["delete"], narrativeId)} 
+                title={`[${loreNarrative.loreType}] ${title}  @[${loreNarrative.timeline}]`} 
+                onContextMenu={e => handleContextMenu(e, [ "new snapshot", "delete" ], narrativeId)} 
             >
                 <div >
                     {/* {loreNarrative.getNormalizedText()} */}
+                    <Text label="Timeline" value={loreTimeline?.toString() || '0'} 
+                        onChange={(e)=> setLoreTimeline(e.target.value)} />
                     <ObjectArray<string[]>
                         itemRenderer={renderKeyComponent}
                         newItemDefaultValue={["key", "value"]}
                         onChange={handleObjectChange}
                         value={Object.keys(loreNarrative.items).map(k=>[k,loreNarrative.items[k]])}
                     >
-                        <Button color="primary" onClick={()=>{ setNarrativeData({...narrativeData}); }}>Save</Button>
-                        <></>
                     </ObjectArray>
+                    <Button color="primary" onClick={()=>{ 
+                        let newTimeline:number|undefined = undefined;
+                        if(typeof loreTimeline === 'string') { try{newTimeline = parseFloat(loreTimeline);}catch(e){} }
+                        else if (typeof loreTimeline === 'number') newTimeline = loreTimeline;
+                        loreNarrative.timeline = newTimeline || loreNarrative.timeline;
+                        if(newTimeline == 0) loreNarrative.timeline = 0;
+                        setNarrativeData({...narrativeData}); 
+                    }}>Save</Button>
                 </div>
             </BorderedBox>;
         }

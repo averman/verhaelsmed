@@ -32,6 +32,7 @@ const LoreTab: React.FC = () => {
         Object.keys(LoreTypes).map(x=>({name: x, id: x, description: LoreTypes[x].description}))
     );
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [currentTimeline, setCurrentTimeline] = useState<number>(0);
     
     useEffect(() => {
         if (narrativeData && narrativeData["lore"]) {
@@ -109,6 +110,27 @@ const LoreTab: React.FC = () => {
                         } else {
                             let idToDelete = targetId;
                             delete narrativeData.lore[idToDelete];
+                            setNarrativeData({...narrativeData});
+                        }
+                    }
+                    closeContextMenu();
+                }
+            },
+            {
+                title: 'new snapshot',
+                filter: ()=>true,
+                action:  (e: any, targetId: string | string[])=>{
+                    if(targetId){
+                        if(Array.isArray(targetId)){
+                        } else {
+                            let idToDuplicate = targetId;
+                            let newId = randomString(8);
+                            let newLore = new LoreNarrative(newId, currentTimeline || narrativeData.lore[idToDuplicate].timeline + 1, 
+                                (narrativeData.lore[idToDuplicate] as LoreNarrative).loreType);
+                            newLore.items = {...(narrativeData.lore[idToDuplicate] as LoreNarrative).items};
+                            newLore.rawCondition = (narrativeData.lore[idToDuplicate] as LoreNarrative).rawCondition;
+                            newLore.condition = new Function('inputs', newLore.rawCondition) as (inputs: any) => [];
+                            narrativeData.lore[newId] = newLore;
                             setNarrativeData({...narrativeData});
                         }
                     }
