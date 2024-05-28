@@ -4,6 +4,9 @@ import ProseNarrative from '../core/ProseNarrative';
 import { useSettingsData } from './SettingsDataContext';
 import { filterNarratives } from '../agents/filter-utils';
 import { db } from '../utils/IndexedDbUtils';
+import LoreNarrative from '../core/LoreNarrative';
+import { randomString } from '../utils/Random';
+import LoreTypes from '../hardcoded-settings/LoreTypes';
 
 // Define the type for NativeFunctions
 export type NativeFunctions = {
@@ -55,6 +58,39 @@ export const NativeFunctionsProvider: React.FC<NativeFunctionsProviderProps> = (
             setNarrativeData({ ...narrativeData });
             return 'narrative set successfully';
         },
+
+        createLore: (params) => {
+            let values:any = {};
+            try {
+                values = JSON.parse(params[0]);
+            }catch(e) {
+                return 'Invalid JSON string for param 0';
+            }
+            let loreType = params[1];
+            let timeline = parseFloat(params[2]);
+            if (!loreType || Number.isNaN(timeline)) return 'Invalid parameters';
+            let newId = 'lore-'+randomString(8);
+            while(newId in narrativeData['lore']) newId = 'lore-'+randomString(8);
+            let newLore = new LoreNarrative(newId, timeline, loreType);
+            let loreId: string;
+            if(loreType in LoreTypes && typeof LoreTypes[loreType].idFrom == 'string') {
+                loreId = values[LoreTypes[loreType].idFrom as string];
+            } else loreId = params[3];
+            newLore.loreId = loreId;
+            newLore.items = values;
+            // get latest existing lore with the same loreId
+            let existingLore = Object.values(narrativeData['lore']).filter(
+                x=>(x as LoreNarrative).loreType == loreType && (x as LoreNarrative).loreId == loreId)
+                .sort((a,b)=>b.timeline-a.timeline)[0];
+            if(existingLore) {
+                newLore.items = {...(existingLore as LoreNarrative).items, ...newLore.items};
+                newLore.rawCondition = (existingLore as LoreNarrative).rawCondition;
+                newLore.condition = new Function('inputs', newLore.rawCondition) as (inputs: any) => string[];
+            }
+            narrativeData['lore'][newId] = newLore;
+            setNarrativeData({...narrativeData});
+            return 'params created successfully';
+        }
     };
 
     return (

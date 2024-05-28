@@ -45,7 +45,6 @@ export const BorderedBox: React.FC<{
                 <AccordionDetails
                     sx={{
                         p: 1, // Padding inside the details box
-                        width: '100%', // Ensure the details box spans the full width
                     }}
                 >
                     {children}
@@ -94,8 +93,9 @@ export const Dropdown: React.FC<{
     label: string,
     value: string,
     options: string[], 
+    sx?: React.CSSProperties,
     onChange: React.ChangeEventHandler<HTMLInputElement| HTMLTextAreaElement> 
-}> = ({ label, value, options, onChange }) => {
+}> = ({ label, value, options, onChange, sx }) => {
     return <TextField
         label={label}
         value={value}
@@ -105,6 +105,7 @@ export const Dropdown: React.FC<{
         name={label.split(' ').join('')}
         select
         SelectProps={{ native: true }}
+        sx={sx}
     >
         {options.map(type => (
             <option key={type} value={type}>{type}</option>

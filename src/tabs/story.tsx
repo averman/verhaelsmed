@@ -15,11 +15,13 @@ import { AgentLogs } from '../components/AgentLogs';
 import LoadModal from '../components/LoadModal';
 import { useMiscLocalContext } from '../contexts/MixedLocalContext';
 import LoadingComponent from '../components/LoadingComponent';
+import { useNativeFunctionsContext } from '../contexts/NativeFunctionsContext';
 
 const Story: React.FC = () => {
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const { settingsData, saveSettingsData } = useSettingsData();
     const { createNewLog } = useMiscLocalContext();
+    const nativeFunctions = useNativeFunctionsContext();
     const [editableBlockId, setEditableBlockId] = useState(-1);
     const [selectedEditors, setSelectedEditors] = useState<string[]>([]);
     const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number; visible: boolean }>({ mouseX: 0, mouseY: 0, visible: false });
@@ -63,7 +65,7 @@ const Story: React.FC = () => {
         let narrative = narrativeData['prose'][targetId] as ProseNarrative;
         let text = narrative.getNormalizedText();
         narrative.summaryLevel++;
-        settingsData.variables["narrative_target_id"] = targetId;
+        await aiGenerationPreproces(targetId);
         saveSettingsData(settingsData);
         let agent = settingsData?.agents?.find(x=>['summarize', 'summarizer', 'summary'].find(y=>x.agentType==y));
         if(!agent) {
@@ -171,16 +173,22 @@ const Story: React.FC = () => {
                 action: (e: any, targetId: string | string[])=>{
                     if(Array.isArray(targetId)) return;
                     handleContextMenuClose();
-                    settingsData.variables["narrative_target_id"] = targetId;
                     let narrative = narrativeData['prose'][targetId] as ProseNarrative;
-                    // let text = narrative.getNormalizedText();
-                    // settingsData.variables["generatedInput"] = text;
                     setTargetNarrative(narrative);
-                    handleGenerateOpen();
+                    aiGenerationPreproces(targetId).then(()=>{
+                        handleGenerateOpen();
+                    })
                 }
             }
         ];
         return items.map(x=>defaultItems.filter(y=>y.title==x)[0]).filter(x=>x).filter(x=>!x.filter || x.filter());
+    }
+
+    async function aiGenerationPreproces(targetId: string){
+        settingsData.variables["narrative_target_id"] = targetId;
+        settingsData.variables["text"] = narrativeData['prose'][targetId].getNormalizedText();
+        settingsData.variables["context"] = await nativeFunctions['getNarrativesBeforeTimelineOfId']([targetId]);
+        settingsData.variables["timeline"] = narrativeData['prose'][targetId].timeline.toString();
     }
 
     const closeContextMenu = () => {
