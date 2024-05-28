@@ -11,12 +11,14 @@ import { useNarrativeData } from '../contexts/NarrativeDataContext';
 import LoreNarrative from '../core/LoreNarrative';
 import SidebarFilter from '../components/SidebarFilter';
 import Narrative from '../core/Narrative';
-import { filterNarratives } from '../agents/filter-utils';
+import { filterLore, filterNarratives } from '../agents/filter-utils';
 import LoreEditor from '../components/LoreEditor';
 import ContextMenu, { ContextMenuItem } from '../components/ContextMenu';
 import { randomString } from '../utils/Random';
 import LoadModal from '../components/LoadModal';
 import LoreTypes from '../hardcoded-settings/LoreTypes';
+import { Box, Checkbox, Typography } from '@mui/material';
+import {Text} from "../components/Deco"
 
 const LoreTab: React.FC = () => {
     const { settingsData } = useSettingsData();
@@ -32,15 +34,21 @@ const LoreTab: React.FC = () => {
         Object.keys(LoreTypes).map(x=>({name: x, id: x, description: LoreTypes[x].description}))
     );
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [currentTimeline, setCurrentTimeline] = useState<number>(0);
+    const [currentTimeline, setCurrentTimeline] = useState<number|string>(0);
+    const [isShowAll, setIsShowAll] = useState<boolean>(false);
     
     useEffect(() => {
         if (narrativeData && narrativeData["lore"]) {
             let narratives = Object.values(narrativeData["lore"]);
+            if(!isShowAll) {
+                let ct = typeof currentTimeline === 'string' ? parseFloat(currentTimeline) : currentTimeline;
+                if (Number.isNaN(ct)) ct = 0;
+                narratives = filterLore(narratives as LoreNarrative[], ct);
+            }
             let filteredNarratives = filterNarratives(narratives, []);
             setLore(filteredNarratives as LoreNarrative[]);
         }
-    }, [narrativeData]);
+    }, [narrativeData, currentTimeline, isShowAll]);
 
     useEffect(() => {
         // Only add the event listener if the context menu is visible
@@ -85,7 +93,11 @@ const LoreTab: React.FC = () => {
             newId = "lore-" + randomString(8);
         }
         
-        let newNarrative = new LoreNarrative(newId, 0, loreType);
+        let tl: number | undefined = undefined;
+        if(typeof currentTimeline === 'string') { try{tl = parseFloat(currentTimeline);}catch(e){} }
+        else if (typeof currentTimeline === 'number') tl = currentTimeline;
+        if(typeof tl == 'undefined') tl = 0;
+        let newNarrative = new LoreNarrative(newId, tl, loreType);
 
         if(!narrativeData.lore) narrativeData.lore = {};
         narrativeData.lore[newId] = newNarrative;
@@ -93,11 +105,20 @@ const LoreTab: React.FC = () => {
     }
 
     const rightBar = (
-        <Button sx={{width: '90%', left: '5%'}} 
-            variant="outlined" onClick={() => setIsModalOpen(true)}
-        >
-            Create New Lore
-        </Button>)
+        <Box>
+            <Typography>Current Timeline: </Typography>
+            <Text label='Current Timeline' value={currentTimeline.toString()} 
+                onChange={(e)=>setCurrentTimeline(e.target.value)}
+                InputProps={{sx: {width: '99%'}}}/>
+            <Typography>Show All: </Typography><Checkbox checked={isShowAll} onChange={(e)=>{
+                setIsShowAll(e.target.checked);
+            }} />
+            <Button sx={{width: '90%', left: '5%'}} 
+                variant="outlined" onClick={() => setIsModalOpen(true)}
+            >
+                Create New Lore
+            </Button>
+        </Box>)
 
     const getContextMenuItems = (items: string[]): ContextMenuItem[] => {
         const defaultItems = [
@@ -125,7 +146,10 @@ const LoreTab: React.FC = () => {
                         } else {
                             let idToDuplicate = targetId;
                             let newId = randomString(8);
-                            let newLore = new LoreNarrative(newId, currentTimeline || narrativeData.lore[idToDuplicate].timeline + 1, 
+                            let ct;
+                            if(typeof currentTimeline === 'string') { try{ct = parseFloat(currentTimeline);}catch(e){} }
+                            else if (typeof currentTimeline === 'number') ct = currentTimeline;
+                            let newLore = new LoreNarrative(newId, ct || narrativeData.lore[idToDuplicate].timeline + 1, 
                                 (narrativeData.lore[idToDuplicate] as LoreNarrative).loreType);
                             newLore.items = {...(narrativeData.lore[idToDuplicate] as LoreNarrative).items};
                             newLore.rawCondition = (narrativeData.lore[idToDuplicate] as LoreNarrative).rawCondition;

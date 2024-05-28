@@ -5,7 +5,7 @@ import ObjectArray from "./ObjectArray";
 import { NarrativeItemsProps } from "./SidebarFilter";
 import {Text} from "./Deco"
 import LoreTypes from "../hardcoded-settings/LoreTypes";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import { NarrativeDict } from "../core/Narrative";
 
@@ -48,13 +48,11 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
                     <TextArea label={`${item[0]} value`} 
                         value={item[1]} 
                         onChange={(e)=>[handleChange([item[0], e.target.value])]} 
-                        sx= {{width: '97%'} }
                     />
 
                 ): (
                     <Text label={`${item[0]} value`} 
                         value={item[1]} onChange={(e)=>[handleChange([item[0], e.target.value])]} 
-                        InputProps={{sx: {width: '97%'} }}
                     />
                 )}
             </BorderedBox>
@@ -81,12 +79,15 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
                 title = loreNarrative.items[LoreTypes[loreNarrative.loreType].idFrom || title];
             return <BorderedBox collapsible 
                 title={`[${loreNarrative.loreType}] ${title}  @[${loreNarrative.timeline}]`} 
-                onContextMenu={e => handleContextMenu(e, [ "new snapshot", "delete" ], narrativeId)} 
+                onContextMenu={e => handleContextMenu(e, [ "new snapshot", "delete" ], narrativeId)}
+                sx={{width: "98%"}} 
             >
-                <div >
+                <Box>
                     {/* {loreNarrative.getNormalizedText()} */}
                     <Text label="Timeline" value={loreTimeline?.toString() || '0'} 
-                        onChange={(e)=> setLoreTimeline(e.target.value)} />
+                        onChange={(e)=> setLoreTimeline(e.target.value)}
+                        InputProps={{ sx:{paddingRight: 10}}}
+                    />
                     <ObjectArray<string[]>
                         itemRenderer={renderKeyComponent}
                         newItemDefaultValue={["key", "value"]}
@@ -102,7 +103,7 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
                         if(newTimeline == 0) loreNarrative.timeline = 0;
                         setNarrativeData({...narrativeData}); 
                     }}>Save</Button>
-                </div>
+                </Box>
             </BorderedBox>;
         }
 

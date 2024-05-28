@@ -17,6 +17,7 @@ import Box from '@mui/material/Box';
 // New icons for summary navigation
 import SummarizeIcon from '@mui/icons-material/Compress'; // For navigating to a more summarized version
 import DetailsIcon from '@mui/icons-material/Expand'; // For navigating to a more detailed version
+import { Text } from './Deco';
 
 
 
@@ -25,6 +26,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
     const { narrativeData, setNarrativeData } = useNarrativeData();
     const [narrative, setNarrative] = useState<Narrative | undefined>(undefined);
     const [isEditing, setIsEditing] = useState(initialEditingState);
+    const [timeline, setTimeline] = useState<number | string | undefined>(undefined);
     const editableContentRef = useRef<HTMLDivElement>(null);
 
     const renderMarkdown = (markdown: string): { __html: string } => {
@@ -62,6 +64,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
     useEffect(() => {
         if (narrativeData && narrativeData["prose"]) {
             setNarrative(narrativeData["prose"][narrativeId])
+            setTimeline(narrativeData["prose"][narrativeId].timeline)
         }
     }, [narrativeData])
 
@@ -100,6 +103,10 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
         if (newContent !== null && newContent !== narrativeData['prose'][narrativeId].getNormalizedText()) {
             const narratives = narrativeData['prose'];
             const narrative = narratives[narrativeId] as ProseNarrative;
+            let tl: number | undefined = undefined;
+            if (typeof timeline === 'string') { try { tl = parseFloat(timeline); } catch (e) { } }
+            else if (typeof timeline === 'number') tl = timeline;
+            narrative.timeline = tl || narrative.timeline;
             narrative.setNormalizedText(newContent);
             setNarrativeData({ ...narrativeData, 'prose': { ...narratives, [narrativeId]: narrative } });
         }
@@ -121,6 +128,10 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
             setIsEditing(false);
         }
     }
+    let ct: string;
+    if (typeof timeline === 'string') ct = timeline;
+    else if (typeof timeline === 'number') ct = timeline.toString();
+    else ct = '0';
 
     return (
         <Card onDoubleClick={handleDoubleClick} sx={{margin: 2, marginBottom: 3}} onClick={(e) => {
@@ -151,6 +162,23 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                             <SummarizeIcon fontSize="inherit" />
                         </IconButton>
                     )}
+                </Box>
+                <Box position="absolute" top={0} left={0} zIndex="tooltip">
+                    <Text label='' value={ct} onChange={(e)=>setTimeline(e.target.value)} 
+                        InputProps={{sx: {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                border: 'none',
+                            }, 
+                            '& .MuiInputBase-input': {
+                                padding: 0,
+                                margin: 0,
+                                marginLeft: 2,
+                                top: -2
+                            },
+                            top: -10,
+                            fontSize: 12
+                        } }}
+                    />
                 </Box>
                 <CardContent>
                     {isEditing ? (

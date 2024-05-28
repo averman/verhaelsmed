@@ -45,7 +45,6 @@ export const BorderedBox: React.FC<{
                 <AccordionDetails
                     sx={{
                         p: 1, // Padding inside the details box
-                        width: '100%', // Ensure the details box spans the full width
                     }}
                 >
                     {children}

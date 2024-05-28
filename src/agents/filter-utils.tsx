@@ -1,3 +1,4 @@
+import LoreNarrative from "../core/LoreNarrative";
 import Narrative from "../core/Narrative";
 
 export interface FilterCriteria {
@@ -37,4 +38,17 @@ export function filterNarratives(narratives: Narrative[], filters: FilterCriteri
     });
 
     return filteredNarratives;
+}
+
+export function filterLore(narratives: LoreNarrative[], asOfTimeline: number): LoreNarrative[] {
+    let tempNarratives = narratives.filter(x=>x.timeline <= asOfTimeline);
+    let narrativeGroups: {[key: string]: LoreNarrative[]} = {};
+    tempNarratives.forEach(x=>{
+        let ln: LoreNarrative = x as LoreNarrative;
+        let id = `${ln.loreType}-${ln.loreId}`;
+        if(!narrativeGroups[id]) narrativeGroups[id] = [];
+        narrativeGroups[id].push(ln);
+    });
+    tempNarratives = Object.values(narrativeGroups).map(x=>x.sort((a,b)=>b.timeline-a.timeline)[0]);
+    return tempNarratives;
 }
