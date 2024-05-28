@@ -7,15 +7,26 @@ class LoreNarrative extends Narrative {
     narrativeType: string = "lore";
     loreType: string = "story";
     loreId: string = "";
-    rawCondition: string = "true";
+    rawCondition: string = 'return ["*"]';
     items: {[key: string]: string} = {};
     condition: (inputs: any) => string[] = (inputs: any) => [];
-    getNormalizedText(targetTokenCount?: number): string { 
-        if(this.loreType in LoreTypes) {
-            return LoreTypes[this.loreType].keys.filter(x=>x && x!='')
-                .map(key => `${key}: ${this.items[key]}`).join("\n");
+    getNormalizedText(input: any): string { 
+        let conditionResult = this.condition(input);
+        if(!conditionResult) conditionResult = [];
+        let resolvedConditionResult: string[] = [];
+        for(let key of conditionResult) {
+            if(key.includes('*')) {
+                Object.keys(this.items).forEach(x=>{
+                    let regexMatch = new RegExp(key.replace('*', '.*')).test(x);
+                    if(regexMatch) resolvedConditionResult.push(x);
+                })
+            } else resolvedConditionResult.push(key)
         }
-        return Object.keys(this.items).map(key => `${key}: ${this.items[key]}`).join("\n");
+        let sortedKeys = this.loreType in LoreTypes?LoreTypes[this.loreType].keys:[];
+        let unsortedKeys = Object.keys(this.items).filter(x=>!sortedKeys.includes(x));
+        let keys = [...sortedKeys, ...unsortedKeys];
+        return keys.filter(x=>this.items[x] && this.items[x]!='' && resolvedConditionResult.includes(x))
+            .map(key => `${key}: ${this.items[key]}`).join("\n");
     }
     summaries: string[] = [];
     

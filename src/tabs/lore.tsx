@@ -39,6 +39,7 @@ const LoreTab: React.FC = () => {
     
     useEffect(() => {
         if (narrativeData && narrativeData["lore"]) {
+            console.log("updating lore display")
             let narratives = Object.values(narrativeData["lore"]);
             if(!isShowAll) {
                 let ct = typeof currentTimeline === 'string' ? parseFloat(currentTimeline) : currentTimeline;
@@ -46,6 +47,7 @@ const LoreTab: React.FC = () => {
                 narratives = filterLore(narratives as LoreNarrative[], ct);
             }
             let filteredNarratives = filterNarratives(narratives, []);
+            console.log("setting lore")
             setLore(filteredNarratives as LoreNarrative[]);
         }
     }, [narrativeData, currentTimeline, isShowAll]);

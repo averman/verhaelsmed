@@ -40,7 +40,7 @@ export default abstract class Narrative {
     summaryLevel: number = -1;
     abstract haveSummary(): boolean;
     abstract narrativeType: string;
-    abstract getNormalizedText(targetTokenCount?: number): string;
+    abstract getNormalizedText(input?: any): string;
 
     // Serde
     private serializers: {[format: string]: NarrativeSerializer} = {};

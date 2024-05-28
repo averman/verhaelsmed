@@ -6,8 +6,9 @@ import { NarrativeItemsProps } from "./SidebarFilter";
 import {Text} from "./Deco"
 import LoreTypes from "../hardcoded-settings/LoreTypes";
 import { Box, Button } from "@mui/material";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { NarrativeDict } from "../core/Narrative";
+import { validateScript } from "../agents/script-utils";
 
 const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing, initialEditingState,
     handleContextMenu, handleEditorSelect, isSelected }) => {
@@ -16,12 +17,14 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
         // const loreNarrative:LoreNarrative = narrativeData["lore"][narrativeId] as LoreNarrative;
         const [loreNarrative, setLoreNarrative] = useState<LoreNarrative | undefined>(undefined);
         const [loreTimeline, setLoreTimeline] = useState<number | string | undefined>(undefined);
+        const [loreCondition, setLoreCondition] = useState<string | undefined>(undefined);
 
         useEffect(() => {
             if (narrativeData && narrativeData["lore"]) {
                 let narrative = narrativeData["lore"][narrativeId];
                 setLoreNarrative(narrative as LoreNarrative);
                 if(narrative) setLoreTimeline(narrative.timeline);
+                if(narrative) setLoreCondition((narrative as LoreNarrative).rawCondition);
             }
         }, [narrativeData]);
 
@@ -88,6 +91,10 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
                         onChange={(e)=> setLoreTimeline(e.target.value)}
                         InputProps={{ sx:{paddingRight: 10}}}
                     />
+                    <TextArea label={"condition"} value={loreCondition || 'return ["*"]'} 
+                        onChange={function (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void {
+                        setLoreCondition(event.target.value); 
+                    } }  />
                     <ObjectArray<string[]>
                         itemRenderer={renderKeyComponent}
                         newItemDefaultValue={["key", "value"]}
@@ -101,6 +108,12 @@ const LoreEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing,
                         else if (typeof loreTimeline === 'number') newTimeline = loreTimeline;
                         loreNarrative.timeline = newTimeline || loreNarrative.timeline;
                         if(newTimeline == 0) loreNarrative.timeline = 0;
+                        try{
+                            validateScript(loreCondition || 'return ["*"]');
+                            loreNarrative.rawCondition = loreCondition || 'return ["*"]';
+                            loreNarrative.condition = new Function('inputs', loreNarrative.rawCondition) as (inputs: any) => [];
+                        } catch(e){
+                        }
                         setNarrativeData({...narrativeData}); 
                     }}>Save</Button>
                 </Box>
