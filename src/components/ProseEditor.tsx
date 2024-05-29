@@ -140,7 +140,9 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                 handleEditorSelect(narrativeId);
             }
         }}>
-            <Box display="flex" flexDirection="column" position="relative">
+            <Box display="flex" flexDirection="column" position="relative" sx={{
+                backgroundColor: isSelected?'#eef5ff':'#ffffff'
+            }}>
                 <Box position="absolute" top={0} right={0} zIndex="tooltip">
                     {narrative?.group && (
                         <IconButton onClick={goToGroup} size="small">
@@ -201,6 +203,7 @@ const ProseEditor: React.FC<NarrativeItemsProps> = ({ narrativeId, switchEditing
                                     if (!isSelected && narrative?.isAGroup) contextMenus.push("ungroup");
                                     if (!isSelected && narrative?.group !== "") contextMenus.push("remove from group");
                                     if (!isSelected) contextMenus.push("create summary");
+                                    if (!isSelected && (narrative?.summaryLevel ?? -1) > -1) contextMenus.push("delete summary");
                                     if (!isSelected) contextMenus.push("generate text");
                                     handleContextMenu(e, contextMenus, narrativeId)
                                 }}></div>

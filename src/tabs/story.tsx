@@ -59,24 +59,6 @@ const Story: React.FC = () => {
         narrative.summaries[narrative.summaryLevel] = text;
         setNarrativeData({...narrativeData});
         handleSummaryClose();
-      } },
-      { title: 'Auto Generate', isVisible: () => true, onClick: async(e: React.MouseEvent, target: any, title: string) => {
-        let targetId = target.toString();
-        let narrative = narrativeData['prose'][targetId] as ProseNarrative;
-        let text = narrative.getNormalizedText();
-        narrative.summaryLevel++;
-        await aiGenerationPreproces(targetId);
-        saveSettingsData(settingsData);
-        let agent = settingsData?.agents?.find(x=>['summarize', 'summarizer', 'summary'].find(y=>x.agentType==y));
-        if(!agent) {
-            narrative.summaries[narrative.summaryLevel] = 'error in generating summary, no summarizer agent found';
-            handleSummaryClose();
-            return;
-        }
-        narrative.summaries[narrative.summaryLevel] = 'generating summary...';
-        setNarrativeData({...narrativeData});
-        runAgent(agent, [{key: "body", value: text}], createNewLog());
-        handleSummaryClose();
       } }
     ];
 
@@ -168,6 +150,30 @@ const Story: React.FC = () => {
                 }
             },
             {
+                title: 'delete summary',
+                filter: ()=>selectedEditors.length==0,
+                action: (e: any, targetId: string | string[])=>{
+                    if(Array.isArray(targetId)) return;
+                    let narrative = narrativeData['prose'][targetId] as ProseNarrative;
+                    if(narrative.summaryLevel == -1) {
+                        handleContextMenuClose();
+                        return;
+                    }
+                    if(narrative.summaries.length == narrative.summaryLevel+1){
+                        narrative.summaries.pop();
+                        narrative.summaryLevel--;
+                    }
+                    else {
+                        for(let i = narrative.summaryLevel; i<narrative.summaries.length-1; i++){
+                            narrative.summaries[i] = narrative.summaries[i+1];
+                        }
+                        narrative.summaries.pop();
+                    }
+                    setNarrativeData({...narrativeData});
+                    handleContextMenuClose()
+                }
+            },
+            {
                 title: 'generate text',
                 filter: ()=>selectedEditors.length==0,
                 action: (e: any, targetId: string | string[])=>{
@@ -175,7 +181,7 @@ const Story: React.FC = () => {
                     handleContextMenuClose();
                     let narrative = narrativeData['prose'][targetId] as ProseNarrative;
                     setTargetNarrative(narrative);
-                    aiGenerationPreproces(targetId).then(()=>{
+                    aiGenerationPreprocess(targetId).then(()=>{
                         handleGenerateOpen();
                     })
                 }
@@ -184,11 +190,12 @@ const Story: React.FC = () => {
         return items.map(x=>defaultItems.filter(y=>y.title==x)[0]).filter(x=>x).filter(x=>!x.filter || x.filter());
     }
 
-    async function aiGenerationPreproces(targetId: string){
+    async function aiGenerationPreprocess(targetId: string){
         settingsData.variables["narrative_target_id"] = targetId;
         settingsData.variables["text"] = narrativeData['prose'][targetId].getNormalizedText();
         settingsData.variables["context"] = await nativeFunctions['getNarrativesBeforeTimelineOfId']([targetId]);
         settingsData.variables["timeline"] = narrativeData['prose'][targetId].timeline.toString();
+        saveSettingsData(settingsData);
     }
 
     const closeContextMenu = () => {
@@ -353,7 +360,8 @@ const Story: React.FC = () => {
                 open={generateOpen}
                 onClose={handleGenerateClose}
                 items={
-                    settingsData?.agents?.filter(x=>['generate', 'generation', 'generator'].indexOf(x.agentType) > -1)
+                    settingsData?.agents?.filter(x=>
+                        ['generate', 'generation', 'generator'].filter(y=>x.agentType.includes(y)).length > 0)
                     .map(x=>({name: x.agentName, id: x.agentName, description: x.description}))
                     || []
                 }
