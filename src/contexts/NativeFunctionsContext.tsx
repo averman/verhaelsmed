@@ -70,7 +70,9 @@ export const NativeFunctionsProvider: React.FC<NativeFunctionsProviderProps> = (
             let timeline = parseFloat(params[2]);
             if (!loreType || Number.isNaN(timeline)) return 'Invalid parameters';
             let newId = 'lore-'+randomString(8);
-            while(newId in narrativeData['lore']) newId = 'lore-'+randomString(8);
+            if(narrativeData['lore']){
+                while(newId in narrativeData['lore']) newId = 'lore-'+randomString(8);
+            } else narrativeData['lore'] = {}
             let newLore = new LoreNarrative(newId, timeline, loreType);
             let loreId: string;
             if(loreType in LoreTypes && typeof LoreTypes[loreType].idFrom == 'string') {
